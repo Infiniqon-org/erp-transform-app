@@ -73,7 +73,7 @@ export function AppSidebar() {
 					variant="ghost"
 					size="sm"
 					onClick={() => setMobileOpen(true)}
-					className="fixed top-4 left-4 z-50 lg:hidden bg-white shadow-md"
+					className="fixed top-4 right-4 z-50 lg:hidden bg-white shadow-md"
 				>
 					<Menu className="w-5 h-5" />
 				</Button>

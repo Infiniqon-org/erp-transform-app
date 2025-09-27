@@ -67,7 +67,7 @@ export function ActivityFeed() {
         <CardTitle>Recent Activity</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-80">
+        <ScrollArea className="h-64 sm:h-80">
           <div className="space-y-4">
             {recentActivity.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">

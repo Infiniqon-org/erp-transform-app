@@ -31,7 +31,7 @@ export function PerformanceChart() {
               color: "hsl(var(--chart-4))",
             },
           }}
-          className="h-[300px] w-full"
+          className="h-[250px] sm:h-[300px] w-full"
         >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>

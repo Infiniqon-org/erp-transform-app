@@ -44,7 +44,7 @@ export function MetricsGrid() {
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
       {metrics.map((metric, index) => (
         <Card
           key={metric.title}
