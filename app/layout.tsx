@@ -9,6 +9,8 @@ import { ReduxProvider } from "@/components/providers/redux-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { TransitionProvider } from "@/components/layout/transition-provider"
 
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
