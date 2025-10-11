@@ -1,13 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { AnimatePresence, motion } from "framer-motion"
+import { BarChart3, ChevronLeft, ChevronRight, FileText, HelpCircle, LogOut, Menu, Settings, X, Zap } from "lucide-react"
+import { useEffect, useState } from "react"
+
 import { Button } from "@/components/ui/button"
-import { BarChart3, Zap, FileText, ChevronLeft, ChevronRight, HelpCircle, Settings, LogOut, Menu, X } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
+import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/providers/auth-provider"
+import { usePathname } from "next/navigation"
 
 const navigation = [
 	{
@@ -43,6 +45,21 @@ export function AppSidebar() {
 	const pathname = usePathname()
 	const { logout, isAuthenticated, user } = useAuth()
 
+	const navContainer = {
+		hidden: {},
+		show: {
+			transition: {
+				staggerChildren: 0.06,
+				delayChildren: 0.12,
+			},
+		},
+	}
+
+	const navItem = {
+		hidden: { opacity: 0, y: 12 },
+		show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+	}
+
 	useEffect(() => {
 		const checkMobile = () => {
 			setIsMobile(window.innerWidth < 1024)
@@ -66,7 +83,7 @@ export function AppSidebar() {
 	}
 
 	return (
-		<div>
+		<div className="relative">
 			{/* Mobile Menu Button */}
 			{isMobile && (
 				<Button
@@ -80,15 +97,23 @@ export function AppSidebar() {
 			)}
 
 			{/* Mobile Overlay */}
-			{isMobile && mobileOpen && (
-				<div 
-					className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-					onClick={() => setMobileOpen(false)}
-				/>
-			)}
+			<AnimatePresence>
+				{isMobile && mobileOpen && (
+					<motion.div
+						key="sidebar-overlay"
+						className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 0.6 }}
+						exit={{ opacity: 0 }}
+						transition={{ duration: 0.2 }}
+						onClick={() => setMobileOpen(false)}
+					/>
+				)}
+			</AnimatePresence>
 
 			{/* Sidebar */}
-			<div
+			<motion.aside
+				layout
 				className={cn(
 					"flex flex-col h-screen bg-white border-r border-gray-200 shadow-sm transition-all duration-300",
 					isMobile ? [
@@ -99,7 +124,20 @@ export function AppSidebar() {
 						collapsed ? "w-16" : "w-72"
 					]
 				)}
+				initial={{ opacity: 0, x: -32 }}
+				animate={{ opacity: 1, x: 0 }}
+				transition={{ duration: 0.35 }}
 			>
+				{isMobile && (
+					<Button
+						variant="ghost"
+						size="icon"
+						onClick={() => setMobileOpen(false)}
+						className="absolute top-3 right-3 lg:hidden"
+					>
+						<X className="w-4 h-4" />
+					</Button>
+				)}
 				<div className="flex items-center justify-between p-6 border-b border-gray-100">
 					{!collapsed && (
 						<div className="flex items-center space-x-3">
@@ -128,12 +166,18 @@ export function AppSidebar() {
 					</Button>
 				</div>
 
-				<nav className="flex-1 p-4 space-y-2">
+				<motion.nav
+					className="flex-1 p-4 space-y-2"
+					variants={navContainer}
+					initial="hidden"
+					animate="show"
+				>
 					{navigation.map((item) => {
 						const isActive = pathname === item.href
 						return (
 							<Link key={item.name} href={item.href}>
-								<div
+								<motion.div
+									variants={navItem}
 									className={cn(
 										"flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group",
 										isActive
@@ -149,11 +193,11 @@ export function AppSidebar() {
 											<div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
 										</div>
 									)}
-								</div>
+								</motion.div>
 							</Link>
 						)
 					})}
-				</nav>
+				</motion.nav>
 
 				<div className="p-4 border-t border-gray-100">
 					{!collapsed && (
@@ -203,7 +247,7 @@ export function AppSidebar() {
 						</div>
 					)}
 				</div>
-			</div>
+			</motion.aside>
 		</div>
 	)
 }

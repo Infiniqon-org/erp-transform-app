@@ -7,14 +7,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/components/providers/auth-provider"
-import { Eye, EyeOff, Mail, Lock } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, CheckCircle } from "lucide-react"
 import Link from "next/link"
+import { motion, AnimatePresence } from "framer-motion"
+import { LoadingSpinner, LoadingDots } from "@/components/ui/loading"
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [mounted, setMounted] = useState(false)
@@ -33,7 +36,9 @@ export function LoginForm() {
     try {
       const result = await login(email, password)
       setSuccess(result.message)
-      // Redirect to dashboard after successful login
+      setIsVerifying(true)
+
+      // Add a small delay for verification animation
       setTimeout(() => {
         window.location.href = '/dashboard'
       }, 2000)
@@ -133,33 +138,93 @@ export function LoginForm() {
             </div>
 
             {/* Alerts */}
-            {error && (
-              <Alert variant="destructive" className="bg-red-50 border-red-200">
-                <AlertDescription className="text-red-700">{error}</AlertDescription>
-              </Alert>
-            )}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Alert variant="destructive" className="bg-red-50 border-red-200">
+                    <AlertDescription className="text-red-700">{error}</AlertDescription>
+                  </Alert>
+                </motion.div>
+              )}
 
-            {success && (
-              <Alert className="bg-green-50 border-green-200">
-                <AlertDescription className="text-green-700">{success}</AlertDescription>
-              </Alert>
-            )}
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Alert className="bg-green-50 border-green-200">
+                    <AlertDescription className="text-green-700 flex items-center gap-2">
+                      {isVerifying ? (
+                        <>
+                          <LoadingSpinner size="sm" />
+                          <span>Verifying credentials...</span>
+                          <LoadingDots />
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          <span>{success}</span>
+                        </>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors"
-              disabled={isLoading}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              {isLoading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Signing in...</span>
-                </div>
-              ) : (
-                'Sign in'
-              )}
-            </Button>
+              <Button
+                type="submit"
+                className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors"
+                disabled={isLoading || isVerifying}
+              >
+                <AnimatePresence mode="wait">
+                  {isLoading ? (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center space-x-2"
+                    >
+                      <LoadingSpinner size="sm" />
+                      <span>Signing in...</span>
+                    </motion.div>
+                  ) : isVerifying ? (
+                    <motion.div
+                      key="verifying"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center space-x-2"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Success! Redirecting...</span>
+                    </motion.div>
+                  ) : (
+                    <motion.span
+                      key="signin"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      Sign in
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </Button>
+            </motion.div>
           </form>
 
           {/* Sign up link */}

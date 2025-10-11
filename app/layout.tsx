@@ -1,10 +1,13 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
-import { ReduxProvider } from "@/components/providers/redux-provider"
+
+import { Inter, Playfair_Display } from "next/font/google"
+
 import { AuthProvider } from "@/components/providers/auth-provider"
+import type { Metadata } from "next"
+import type React from "react"
+import { ReduxProvider } from "@/components/providers/redux-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { TransitionProvider } from "@/components/layout/transition-provider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -35,7 +38,7 @@ export default function RootLayout({
       <body className="font-sans antialiased bg-slate-50">
         <ReduxProvider>
           <AuthProvider>
-            {children}
+            <TransitionProvider>{children}</TransitionProvider>
           </AuthProvider>
         </ReduxProvider>
         <Toaster />

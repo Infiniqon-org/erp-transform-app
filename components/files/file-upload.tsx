@@ -1,11 +1,14 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle, CheckCircle, FileText, Loader2, Upload, X } from "lucide-react"
+import { useCallback, useRef, useState } from "react"
+
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Upload, X, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { motion, AnimatePresence } from "framer-motion"
+import { fadeInUp, staggerContainer } from "@/components/ui/motion"
 
 interface FileUploadProps {
   onFileUploaded?: (file: File) => void
@@ -14,7 +17,7 @@ interface FileUploadProps {
   acceptedTypes?: string[]
 }
 
-export function FileUpload({ onFileUploaded, uploadFile: externalUploadFile, maxFileSize = 50, acceptedTypes = ['.csv', '.xlsx', '.xls', '.json', '.parquet'] }: FileUploadProps) {
+export function FileUpload({ onFileUploaded, uploadFile: externalUploadFile, maxFileSize = 500, acceptedTypes = ['.csv', '.xlsx', '.xls', '.json', '.parquet'] }: FileUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [uploadingFiles, setUploadingFiles] = useState<Array<{
@@ -165,7 +168,7 @@ export function FileUpload({ onFileUploaded, uploadFile: externalUploadFile, max
   return (
     <div className="space-y-4">
       {/* Upload Area */}
-      <div
+      <motion.div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -175,6 +178,13 @@ export function FileUpload({ onFileUploaded, uploadFile: externalUploadFile, max
             : 'border-muted-foreground/25 hover:border-primary/50'
         }`}
         onClick={() => fileInputRef.current?.click()}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        animate={{
+          borderColor: isDragOver ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground) / 0.25)',
+          backgroundColor: isDragOver ? 'hsl(var(--primary) / 0.05)' : 'transparent'
+        }}
+        transition={{ duration: 0.2 }}
       >
         <input
           ref={fileInputRef}
@@ -185,76 +195,142 @@ export function FileUpload({ onFileUploaded, uploadFile: externalUploadFile, max
           className="hidden"
         />
 
-        <Upload className={`mx-auto h-12 w-12 mb-4 ${isDragOver ? 'text-primary' : 'text-muted-foreground'}`} />
-        <h3 className="text-lg font-medium mb-2">
+        <motion.div
+          animate={{
+            y: isDragOver ? [0, -5, 0] : 0,
+            rotate: isDragOver ? [0, 5, -5, 0] : 0
+          }}
+          transition={{ duration: 0.5 }}
+        >
+          <Upload className={`mx-auto h-12 w-12 mb-4 ${isDragOver ? 'text-primary' : 'text-muted-foreground'}`} />
+        </motion.div>
+        <motion.h3
+          className="text-lg font-medium mb-2"
+          animate={{ scale: isDragOver ? 1.05 : 1 }}
+          transition={{ duration: 0.2 }}
+        >
           {isDragOver ? 'Drop files here' : 'Upload ERP Files'}
-        </h3>
+        </motion.h3>
         <p className="text-sm text-muted-foreground mb-4">
           Drag & drop files here or click to browse
         </p>
         <p className="text-xs text-muted-foreground">
           Supported formats: {acceptedTypes.join(', ')} • Max size: {maxFileSize}MB
         </p>
-      </div>
+      </motion.div>
 
       {/* Selected Files */}
-      {selectedFiles.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium">Selected Files ({selectedFiles.length})</h4>
-            <Button variant="ghost" size="sm" onClick={clearAll}>
-              Clear All
-            </Button>
-          </div>
+      <AnimatePresence>
+        {selectedFiles.length > 0 && (
+          <motion.div
+            className="space-y-2"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium">Selected Files ({selectedFiles.length})</h4>
+              <Button variant="ghost" size="sm" onClick={clearAll}>
+                Clear All
+              </Button>
+            </div>
 
-          {selectedFiles.map((file, index) => {
-            const uploadStatus = uploadingFiles.find(item => item.file === file)
-            return (
-              <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
-                <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                  {uploadStatus && (
-                    <div className="mt-2">
-                      <Progress value={uploadStatus.progress} className="h-1" />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {uploadStatus.status === 'uploading' && `Uploading... ${uploadStatus.progress}%`}
-                        {uploadStatus.status === 'completed' && 'Upload completed'}
-                        {uploadStatus.status === 'error' && `Error: ${uploadStatus.error}`}
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center space-x-1">
-                  {uploadStatus?.status === 'uploading' && (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  )}
-                  {uploadStatus?.status === 'completed' && (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  )}
-                  {uploadStatus?.status === 'error' && (
-                    <AlertCircle className="h-4 w-4 text-red-500" />
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      removeFile(file)
-                    }}
-                    disabled={uploadStatus?.status === 'uploading'}
+            <motion.div
+              className="space-y-2"
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+            >
+              {selectedFiles.map((file, index) => {
+                const uploadStatus = uploadingFiles.find(item => item.file === file)
+                return (
+                  <motion.div
+                    key={`${file.name}-${file.size}`}
+                    variants={fadeInUp}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex items-center space-x-3 p-3 border rounded-lg bg-card/50"
                   >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
+                    <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                      <AnimatePresence>
+                        {uploadStatus && (
+                          <motion.div
+                            className="mt-2"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <Progress value={uploadStatus.progress} className="h-1" />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {uploadStatus.status === 'uploading' && `Uploading... ${uploadStatus.progress}%`}
+                              {uploadStatus.status === 'completed' && 'Upload completed'}
+                              {uploadStatus.status === 'error' && `Error: ${uploadStatus.error}`}
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <AnimatePresence>
+                        {uploadStatus?.status === 'uploading' && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                          </motion.div>
+                        )}
+                        {uploadStatus?.status === 'completed' && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          </motion.div>
+                        )}
+                        {uploadStatus?.status === 'error' && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <AlertCircle className="h-4 w-4 text-red-500" />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeFile(file)
+                        }}
+                        disabled={uploadStatus?.status === 'uploading'}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Upload Summary */}
       {uploadingFiles.length > 0 && (
