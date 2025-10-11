@@ -435,12 +435,12 @@ function FilesPageContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">File Management</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">File Management</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Upload, process, and manage your data files
           </p>
         </div>
@@ -448,31 +448,34 @@ function FilesPageContent() {
 
       {/* Tabbed Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-3 h-auto">
           <TabsTrigger
             value="upload"
-            className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 sm:py-3 text-xs sm:text-sm"
           >
-            <Upload className="w-4 h-4" />
-            Upload & Process
+            <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Upload & Process</span>
+            <span className="sm:hidden">Upload</span>
           </TabsTrigger>
           <TabsTrigger
             value="files"
-            className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 sm:py-3 text-xs sm:text-sm"
           >
-            <FileText className="w-4 h-4" />
-            File Management
+            <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">File Management</span>
+            <span className="sm:hidden">Files</span>
           </TabsTrigger>
           <TabsTrigger
             value="monitor"
-            className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 sm:py-3 text-xs sm:text-sm"
           >
-            <Activity className="w-4 h-4" />
-            Processing Monitor
+            <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Processing Monitor</span>
+            <span className="sm:hidden">Monitor</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="upload" className="mt-6">
+        <TabsContent value="upload" className="mt-4 sm:mt-6">
           <UploadSection
             uploading={uploading}
             uploadProgress={uploadProgress}
@@ -483,7 +486,7 @@ function FilesPageContent() {
           />
         </TabsContent>
 
-        <TabsContent value="files" className="mt-6">
+        <TabsContent value="files" className="mt-4 sm:mt-6">
           <FilesSection
             files={files}
             loading={loading}
@@ -503,7 +506,7 @@ function FilesPageContent() {
           />
         </TabsContent>
 
-        <TabsContent value="monitor" className="mt-6">
+        <TabsContent value="monitor" className="mt-4 sm:mt-6">
           <MonitoringSection files={files} />
         </TabsContent>
       </Tabs>

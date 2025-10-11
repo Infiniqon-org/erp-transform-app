@@ -74,14 +74,14 @@ export function UploadSection({
       {/* Upload Zone */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-foreground">
-            <Upload className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-foreground text-base sm:text-lg">
+            <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
             Upload & Process
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div
-            className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+            className={`relative border-2 border-dashed rounded-lg p-4 sm:p-8 text-center transition-all ${
               dragActive
                 ? 'border-primary bg-primary/10'
                 : 'border-muted-foreground/25 hover:border-muted-foreground/50'
@@ -100,31 +100,31 @@ export function UploadSection({
             />
 
             {uploading ? (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex justify-center">
                   <div className="relative">
                     <motion.div
-                      className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full"
+                      className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-primary/20 border-t-primary rounded-full"
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     />
-                    <Upload className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                   </div>
                 </div>
                 <div>
-                  <p className="text-foreground font-medium mb-2">Processing {selectedFile?.name}</p>
+                  <p className="text-foreground font-medium mb-2 text-sm sm:text-base truncate px-2">Processing {selectedFile?.name}</p>
                   <Progress value={uploadProgress} className="w-full" />
-                  <p className="text-muted-foreground text-sm mt-2">{uploadProgress}% complete</p>
+                  <p className="text-muted-foreground text-xs sm:text-sm mt-2">{uploadProgress}% complete</p>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
-                <div>
-                  <p className="text-foreground font-medium mb-2">
+              <div className="space-y-3 sm:space-y-4">
+                <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto" />
+                <div className="px-2">
+                  <p className="text-foreground font-medium mb-2 text-sm sm:text-base">
                     Drop your CSV file here or click to browse
                   </p>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground text-xs sm:text-sm">
                     Files will be automatically processed through our data quality pipeline
                   </p>
                 </div>
@@ -140,24 +140,24 @@ export function UploadSection({
       {/* Processing Pipeline Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-foreground">
-            <Info className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-foreground text-base sm:text-lg">
+            <Info className="w-4 h-4 sm:w-5 sm:h-5" />
             File Requirements
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <h4 className="font-medium text-foreground">Supported Formats</h4>
-              <ul className="text-muted-foreground text-sm space-y-1">
+              <h4 className="font-medium text-foreground text-sm sm:text-base">Supported Formats</h4>
+              <ul className="text-muted-foreground text-xs sm:text-sm space-y-1">
                 <li>• CSV files only</li>
                 <li>• UTF-8 encoding recommended</li>
                 <li>• Maximum 100MB per file</li>
               </ul>
             </div>
             <div className="space-y-2">
-              <h4 className="font-medium text-foreground">Processing Features</h4>
-              <ul className="text-muted-foreground text-sm space-y-1">
+              <h4 className="font-medium text-foreground text-sm sm:text-base">Processing Features</h4>
+              <ul className="text-muted-foreground text-xs sm:text-sm space-y-1">
                 <li>• Automatic data quality scoring</li>
                 <li>• Real-time processing status</li>
                 <li>• Download clean & quarantine files</li>

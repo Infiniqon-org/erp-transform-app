@@ -155,17 +155,17 @@ export function FilesSection({
       className="space-y-6"
     >
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
         <div>
-          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-            <FileText className="w-5 h-5" />
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground flex items-center gap-2">
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
             File Management
           </h2>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
             Manage your uploaded and processed files
           </p>
         </div>
-        <Button onClick={onRefresh} disabled={loading} variant="outline" size="sm">
+        <Button onClick={onRefresh} disabled={loading} variant="outline" size="sm" className="w-full sm:w-auto">
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
@@ -173,51 +173,51 @@ export function FilesSection({
 
       {/* Files List */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-3 sm:p-6">
           {files.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">No Files Uploaded</h3>
-              <p className="text-muted-foreground">Upload a CSV file to see it here with real data analysis</p>
+            <div className="text-center py-8 sm:py-12">
+              <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">No Files Uploaded</h3>
+              <p className="text-sm text-muted-foreground">Upload a CSV file to see it here with real data analysis</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {files.map((file, index) => (
                 <motion.div
                   key={file.upload_id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="border rounded-lg p-6 hover:bg-muted/50 transition-all cursor-pointer"
+                  className="border rounded-lg p-3 sm:p-6 hover:bg-muted/50 transition-all cursor-pointer"
                   onClick={() => handleFileClick(file)}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <FileText className="w-5 h-5 text-primary mt-1" />
-                      <div className="flex-1">
-                        <h3 className="font-medium text-foreground mb-1">{file.original_filename || file.filename}</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                          <span>Uploaded: {formatDate(file.uploaded_at || file.created_at)}</span>
-                          {file.file_size && <span>Size: {formatFileSize(file.file_size)}</span>}
-                          {file.processing_time && <span>Processed in: {file.processing_time.toFixed(1)}s</span>}
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div className="flex items-start gap-2 sm:gap-4 flex-1 min-w-0">
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary mt-1 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-sm sm:text-base text-foreground mb-1 truncate">{file.original_filename || file.filename}</h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-muted-foreground mb-2">
+                          <span className="truncate">Uploaded: {formatDate(file.uploaded_at || file.created_at)}</span>
+                          {file.file_size && <span className="hidden sm:inline">Size: {formatFileSize(file.file_size)}</span>}
+                          {file.processing_time && <span className="hidden sm:inline">Processed in: {file.processing_time.toFixed(1)}s</span>}
                         </div>
-                        <div className="flex items-center gap-4 text-sm">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                           <span className="text-muted-foreground">
                             Rows: {file.rows_in || 0} → {file.rows_out || file.rows_in || 0}
                           </span>
                           {(file.rows_quarantined ?? 0) > 0 && (
                             <span className="text-yellow-600">
-                              Quarantined: {file.rows_quarantined}
+                              Q: {file.rows_quarantined}
                             </span>
                           )}
                           {file.dq_score !== null && (
                             <span className="text-green-600">
-                              DQ Score: {file.dq_score}%
+                              DQ: {file.dq_score}%
                             </span>
                           )}
                         </div>
                         {file.dq_issues && file.dq_issues.length > 0 && (
-                          <div className="mt-2 text-sm">
+                          <div className="mt-2 text-xs sm:text-sm">
                             <span className="text-muted-foreground">Issues: </span>
                             {file.dq_issues.map((issue, i) => (
                               <span key={issue} className="text-orange-400">
@@ -228,8 +228,8 @@ export function FilesSection({
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={getStatusColor(file.status)}>
+                    <div className="flex items-center gap-2 justify-between sm:justify-start flex-shrink-0">
+                      <Badge className={`${getStatusColor(file.status)} text-xs`}>
                         {file.status}
                       </Badge>
                       
@@ -245,9 +245,9 @@ export function FilesSection({
                                   variant="outline"
                                   onClick={() => onProcess(file)}
                                   disabled={processing}
-                                  className="h-8 w-8"
+                                  className="h-7 w-7 sm:h-8 sm:w-8"
                                 >
-                                  <Play className="h-4 w-4" />
+                                  <Play className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -266,12 +266,12 @@ export function FilesSection({
                                 variant="outline"
                                 onClick={() => onDownload(file, 'original')}
                                 disabled={downloading === `${file.upload_id}-original`}
-                                className="h-8 w-8"
+                                className="h-7 w-7 sm:h-8 sm:w-8"
                               >
                                 {downloading === `${file.upload_id}-original` ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                                 ) : (
-                                  <Download className="h-4 w-4" />
+                                  <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                                 )}
                               </Button>
                             </TooltipTrigger>
@@ -289,12 +289,12 @@ export function FilesSection({
                                   variant="outline"
                                   onClick={() => onDownload(file, 'clean')}
                                   disabled={downloading === `${file.upload_id}-clean`}
-                                  className="h-8 w-8 text-green-600"
+                                  className="h-7 w-7 sm:h-8 sm:w-8 text-green-600"
                                 >
                                   {downloading === `${file.upload_id}-clean` ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                                   ) : (
-                                    <FileSpreadsheet className="h-4 w-4" />
+                                    <FileSpreadsheet className="h-3 w-3 sm:h-4 sm:w-4" />
                                   )}
                                 </Button>
                               </TooltipTrigger>
@@ -314,8 +314,8 @@ export function FilesSection({
 
       {/* File Detail Dialog */}
       <Dialog open={!!selectedFileDetail} onOpenChange={() => setSelectedFileDetail(null)}>
-        <DialogContent className="max-w-6xl max-h-[85vh] overflow-hidden">
-          <DialogHeader>
+        <DialogContent className="max-w-[90vw] lg:max-w-7xl max-h-[90vh] flex flex-col overflow-auto">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5" />
               {selectedFileDetail?.original_filename || selectedFileDetail?.filename}
@@ -323,48 +323,49 @@ export function FilesSection({
           </DialogHeader>
 
           {selectedFileDetail && (
-            <div className="space-y-6 overflow-y-auto pr-2">
+            <ScrollArea className="flex-1 h-0 pr-4">
+              <div className="space-y-6 pb-4">
               {/* File Metadata */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 p-3 sm:p-4 bg-muted/30 rounded-lg text-xs sm:text-sm">
                 <div>
-                  <div className="text-sm text-muted-foreground">Upload ID</div>
-                  <div className="text-sm font-mono">{selectedFileDetail.upload_id}</div>
+                  <div className="text-muted-foreground">Upload ID</div>
+                  <div className="font-mono break-all">{selectedFileDetail.upload_id}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Original Filename</div>
-                  <div className="text-sm font-medium">{selectedFileDetail.original_filename || selectedFileDetail.filename}</div>
+                  <div className="text-muted-foreground">Original Filename</div>
+                  <div className="font-medium break-all">{selectedFileDetail.original_filename || selectedFileDetail.filename}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Uploaded At</div>
-                  <div className="text-sm">{formatDate(selectedFileDetail.uploaded_at || selectedFileDetail.created_at)}</div>
+                  <div className="text-muted-foreground">Uploaded At</div>
+                  <div>{formatDate(selectedFileDetail.uploaded_at || selectedFileDetail.created_at)}</div>
                 </div>
                 {selectedFileDetail.processing_time && (
                   <div>
-                    <div className="text-sm text-muted-foreground">Processing Time</div>
-                    <div className="text-sm">{selectedFileDetail.processing_time.toFixed(2)} seconds</div>
+                    <div className="text-muted-foreground">Processing Time</div>
+                    <div>{selectedFileDetail.processing_time.toFixed(2)} seconds</div>
                   </div>
                 )}
               </div>
 
               {/* File Overview */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-foreground">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+                <div className="text-center p-3 sm:p-4 bg-muted/50 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-foreground">
                     {selectedFileDetail.file_size ? formatFileSize(selectedFileDetail.file_size) : 'N/A'}
                   </div>
-                  <div className="text-sm text-muted-foreground">File Size</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">File Size</div>
                 </div>
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-foreground">{selectedFileDetail.rows_in || 0}</div>
-                  <div className="text-sm text-muted-foreground">Input Rows</div>
+                <div className="text-center p-3 sm:p-4 bg-muted/50 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-foreground">{selectedFileDetail.rows_in || 0}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Input Rows</div>
                 </div>
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-foreground">{selectedFileDetail.rows_out || 0}</div>
-                  <div className="text-sm text-muted-foreground">Output Rows</div>
+                <div className="text-center p-3 sm:p-4 bg-muted/50 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-foreground">{selectedFileDetail.rows_out || 0}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Output Rows</div>
                 </div>
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-foreground">{selectedFileDetail.dq_score || 0}%</div>
-                  <div className="text-sm text-muted-foreground">DQ Score</div>
+                <div className="text-center p-3 sm:p-4 bg-muted/50 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-foreground">{selectedFileDetail.dq_score || 0}%</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">DQ Score</div>
                 </div>
               </div>
 
@@ -528,7 +529,8 @@ export function FilesSection({
                   </CardContent>
                 </Card>
               )}
-            </div>
+              </div>
+            </ScrollArea>
           )}
         </DialogContent>
       </Dialog>
