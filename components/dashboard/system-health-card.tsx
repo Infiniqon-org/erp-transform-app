@@ -1,10 +1,11 @@
 "use client"
 
-import { useAppSelector } from "@/lib/store"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Database, HardDrive, Server } from "lucide-react"
+
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Server, Database, HardDrive } from "lucide-react"
+import { useAppSelector } from "@/lib/store"
 
 export function SystemHealthCard() {
   const { systemHealth } = useAppSelector((state) => state.dashboard)
@@ -57,10 +58,10 @@ export function SystemHealthCard() {
   }
 
   return (
-    <Card className="hover:glow transition-all duration-300">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+          <div className="w-2 h-2 bg-green-500 rounded-full" />
           <span>System Health</span>
         </CardTitle>
       </CardHeader>

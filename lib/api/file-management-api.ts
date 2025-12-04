@@ -48,25 +48,14 @@ export interface FileStatusResponse {
   rows_quarantined?: number
   dq_score?: number | null
   dq_issues?: string[]
-  dq_report_s3?: string
-  dq_rules_version?: string
-  execution_arn?: string
+  // New fields from user JSON
   dispatch_id?: string
-  processing_time?: number
-  reprocess_count?: number
-  last_error?: string
-  detected_erp?: string
-  detected_entity?: string
   engine?: string
-  use_ai_processing?: boolean
-  ai_fallback?: boolean
-  completion_detected_by?: string
+  reprocess_count?: number
   s3_raw_key?: string
   s3_result_key?: string
-  file_data?: {
-    headers: string[]
-    rows: Record<string, any>[]
-  }
+  dq_report_s3?: string
+  dq_rules_version?: string
 }
 
 export interface FileListResponse {

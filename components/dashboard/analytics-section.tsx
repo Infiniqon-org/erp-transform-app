@@ -1,6 +1,5 @@
 "use client"
 
-import { motion } from 'framer-motion'
 import { BarChart3, FileText, Gauge, TrendingUp, Target, AlertTriangle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -39,11 +38,7 @@ export function AnalyticsSection({ files }: AnalyticsSectionProps) {
     }))
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
@@ -75,22 +70,12 @@ export function AnalyticsSection({ files }: AnalyticsSectionProps) {
             icon: Target,
             color: 'text-orange-400'
           }
-        ].map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Card className="hover:shadow-lg transition-all duration-300">
+        ].map((stat) => (
+          <div key={stat.title}>
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center space-x-2">
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                  >
-                    <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                  </motion.div>
+                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
                   <span>{stat.title}</span>
                 </CardTitle>
                 <Badge
@@ -101,18 +86,11 @@ export function AnalyticsSection({ files }: AnalyticsSectionProps) {
                 </Badge>
               </CardHeader>
               <CardContent>
-                <motion.div
-                  className="text-3xl font-bold mb-1"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: index * 0.1 + 0.2, type: "spring", stiffness: 200 }}
-                >
-                  {stat.value}
-                </motion.div>
+                <div className="text-3xl font-bold mb-1">{stat.value}</div>
                 <p className="text-xs text-muted-foreground">vs last period</p>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -126,7 +104,7 @@ export function AnalyticsSection({ files }: AnalyticsSectionProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {topIssues.length > 0 ? topIssues.map((issue, index) => (
+            {topIssues.length > 0 ? topIssues.map((issue) => (
               <div key={issue.issue} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                 <div>
                   <span className="font-medium">{issue.issue}</span>
@@ -228,6 +206,6 @@ export function AnalyticsSection({ files }: AnalyticsSectionProps) {
           </Card>
         </div>
       )}
-    </motion.div>
+    </div>
   )
 }

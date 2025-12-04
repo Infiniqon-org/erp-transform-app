@@ -21,9 +21,9 @@ export default function HomePage() {
 
   // Show loading state while checking authentication
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-50 to-blue-50">
+    <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 text-primary" />
         <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     </div>

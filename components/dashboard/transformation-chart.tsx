@@ -1,8 +1,8 @@
 "use client"
 
+import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 
 const data = [
   { name: "Jan", transformations: 1200, success: 1140 },
@@ -16,7 +16,7 @@ const data = [
 
 export function TransformationChart() {
   return (
-    <Card className="hover:glow transition-all duration-300">
+    <Card>
       <CardHeader>
         <CardTitle>Transformation Trends</CardTitle>
       </CardHeader>

@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Eye, EyeOff, Lock, Mail } from "lucide-react"
+import { useEffect, useState } from 'react'
+
 import { Button } from "@/components/ui/button"
+import { EmailVerification } from "./email-verification"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useAuth } from "@/components/providers/auth-provider"
-import { EmailVerification } from "./email-verification"
-import { Eye, EyeOff, Mail, Lock } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/components/providers/auth-provider"
 
 export function SignUpForm() {
   const [email, setEmail] = useState('')
@@ -114,10 +115,10 @@ export function SignUpForm() {
     <div className="w-full">
       {/* Header Section */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Create account
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Get started with your free account today
         </p>
       </div>
@@ -127,11 +128,11 @@ export function SignUpForm() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">
                 Email
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   id="email"
                   type="email"
@@ -139,18 +140,18 @@ export function SignUpForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="pl-10 h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 transition-colors"
+                  className="pl-10 h-12 border-input focus:border-primary focus:ring-2 focus:ring-ring"
                 />
               </div>
             </div>
 
             {/* Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="password" className="text-sm font-medium text-muted-foreground">
                 Password
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -158,7 +159,7 @@ export function SignUpForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="pl-10 pr-10 h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 transition-colors"
+                  className="pl-10 pr-10 h-12 border-input focus:border-primary focus:ring-2 focus:ring-ring"
                 />
                 <Button
                   type="button"
@@ -168,9 +169,9 @@ export function SignUpForm() {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
+                    <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
                 </Button>
               </div>
@@ -179,13 +180,13 @@ export function SignUpForm() {
               {password && (
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div className="flex-1 bg-muted rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor(getPasswordStrength(password))}`}
                         style={{ width: `${(getPasswordStrength(password) / 5) * 100}%` }}
                       />
                     </div>
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-muted-foreground">
                       {getPasswordStrengthLabel(getPasswordStrength(password))}
                     </span>
                   </div>
@@ -195,11 +196,11 @@ export function SignUpForm() {
 
             {/* Confirm Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-muted-foreground">
                 Confirm Password
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
@@ -207,7 +208,7 @@ export function SignUpForm() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="pl-10 pr-10 h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 transition-colors"
+                  className="pl-10 pr-10 h-12 border-input focus:border-primary focus:ring-2 focus:ring-ring"
                 />
                 <Button
                   type="button"
@@ -217,9 +218,9 @@ export function SignUpForm() {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
+                    <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
                 </Button>
               </div>
@@ -231,15 +232,15 @@ export function SignUpForm() {
                 id="terms"
                 type="checkbox"
                 required
-                className="h-4 w-4 mt-0.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                className="h-4 w-4 mt-0.5 rounded border-input text-primary focus:ring-ring"
               />
-              <Label htmlFor="terms" className="text-sm text-gray-600 leading-5">
+              <Label htmlFor="terms" className="text-sm text-muted-foreground leading-5">
                 I agree to the{' '}
-                <Link href="/terms" className="text-emerald-600 hover:text-emerald-700 transition-colors">
+                <Link href="/terms" className="text-accent hover:opacity-90">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link href="/privacy" className="text-emerald-600 hover:text-emerald-700 transition-colors">
+                <Link href="/privacy" className="text-accent hover:opacity-90">
                   Privacy Policy
                 </Link>
               </Label>
@@ -247,40 +248,33 @@ export function SignUpForm() {
 
             {/* Alerts */}
             {error && (
-              <Alert variant="destructive" className="bg-red-50 border-red-200">
-                <AlertDescription className="text-red-700">{error}</AlertDescription>
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
             {success && (
-              <Alert className="bg-green-50 border-green-200">
-                <AlertDescription className="text-green-700">{success}</AlertDescription>
+              <Alert>
+                <AlertDescription>{success}</AlertDescription>
               </Alert>
             )}
 
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
               disabled={isLoading}
             >
-              {isLoading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Creating account...</span>
-                </div>
-              ) : (
-                'Create account'
-              )}
+              {isLoading ? 'Creating account...' : 'Create account'}
             </Button>
           </form>
 
           {/* Sign in link */}
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-muted-foreground">
             Already have an account?{' '}
             <Link
               href="/auth/login"
-              className="text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+              className="text-accent hover:opacity-90 font-medium"
             >
               Sign in
             </Link>

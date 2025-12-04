@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect } from 'react'
 import { useAuth } from '@/components/providers/auth-provider'
+import { useEffect } from 'react'
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -20,7 +20,7 @@ export function AuthGuard({ children, redirectTo = '/auth/login' }: AuthGuardPro
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="rounded-full h-10 w-10 border-2 border-muted-foreground"></div>
       </div>
     )
   }

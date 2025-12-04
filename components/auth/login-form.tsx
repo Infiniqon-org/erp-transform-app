@@ -1,16 +1,17 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AnimatePresence, motion } from "framer-motion"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { CheckCircle, Eye, EyeOff, Lock, Mail } from "lucide-react"
+import { LoadingDots, LoadingSpinner } from "@/components/ui/loading"
+import { useEffect, useState } from 'react'
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useAuth } from "@/components/providers/auth-provider"
-import { Eye, EyeOff, Mail, Lock, CheckCircle } from "lucide-react"
 import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
-import { LoadingSpinner, LoadingDots } from "@/components/ui/loading"
+import { useAuth } from "@/components/providers/auth-provider"
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
@@ -55,10 +56,10 @@ export function LoginForm() {
     <div className="w-full">
       {/* Header Section */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Welcome back
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Enter your credentials to access your account
         </p>
       </div>
@@ -68,11 +69,11 @@ export function LoginForm() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">
                 Email
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   id="email"
                   type="email"
@@ -80,18 +81,18 @@ export function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="pl-10 h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 transition-colors"
+                  className="pl-10 h-12 border-input focus:border-primary focus:ring-2 focus:ring-ring"
                 />
               </div>
             </div>
 
             {/* Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="password" className="text-sm font-medium text-muted-foreground">
                 Password
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -99,7 +100,7 @@ export function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="pl-10 pr-10 h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 transition-colors"
+                  className="pl-10 pr-10 h-12 border-input focus:border-primary focus:ring-2 focus:ring-ring"
                 />
                 <Button
                   type="button"
@@ -109,9 +110,9 @@ export function LoginForm() {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
+                    <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
                 </Button>
               </div>
@@ -123,15 +124,15 @@ export function LoginForm() {
                 <input
                   id="remember"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
                 />
-                <Label htmlFor="remember" className="text-sm text-gray-600">
+                <Label htmlFor="remember" className="text-sm text-muted-foreground">
                   Remember me
                 </Label>
               </div>
               <Link
                 href="/auth/forgot-password"
-                className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+                className="text-sm text-accent hover:opacity-90"
               >
                 Forgot password?
               </Link>
@@ -186,7 +187,7 @@ export function LoginForm() {
             >
               <Button
                 type="submit"
-                className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors"
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 disabled={isLoading || isVerifying}
               >
                 <AnimatePresence mode="wait">
@@ -228,11 +229,11 @@ export function LoginForm() {
           </form>
 
           {/* Sign up link */}
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{' '}
             <Link
               href="/auth/signup"
-              className="text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+              className="text-accent hover:opacity-90 font-medium"
             >
               Sign up
             </Link>

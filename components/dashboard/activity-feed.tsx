@@ -1,30 +1,10 @@
 "use client"
 
-import { useAppSelector } from "@/lib/store"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { CheckCircle, Clock, Download, FileText, Upload, XCircle } from "lucide-react"
+
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { FileText, Upload, Download, CheckCircle, XCircle, Clock } from "lucide-react"
-import { AnimatePresence, motion, type Variants } from "framer-motion"
-import { staggerContainer, fadeInUp, cardHover } from "@/components/ui/motion"
-
-const listVariants: Variants = {
-  animate: {
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    },
-  },
-}
-
-const itemVariants: Variants = {
-  initial: { opacity: 0, y: 18 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 180, damping: 18 },
-  },
-  exit: { opacity: 0, y: -12 },
-}
+import { useAppSelector } from "@/lib/store"
 
 export function ActivityFeed() {
   const { recentActivity } = useAppSelector((state) => state.dashboard)
@@ -95,76 +75,53 @@ export function ActivityFeed() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-      <Card className="hover:shadow-lg transition-all duration-300">
+    <div>
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle>Recent Activity</CardTitle>
           {recentActivity.length > 0 && (
-            <motion.span
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              className="text-xs font-medium text-muted-foreground"
-            >
-              {recentActivity.length} updates
-            </motion.span>
+            <span className="text-xs font-medium text-muted-foreground">{recentActivity.length} updates</span>
           )}
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-64 sm:h-80 pr-1">
-            <AnimatePresence initial={false}>
-              {recentActivity.length === 0 ? (
-                <motion.div
-                  key="empty"
-                  className="text-center text-muted-foreground py-8"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No recent activity</p>
-                </motion.div>
-              ) : (
-                <motion.ul
-                  className="space-y-4"
-                  variants={listVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                >
-                  {recentActivity.map((activity) => {
-                    const ActivityIcon = getActivityIcon(activity.type)
-                    const StatusIcon = getStatusIcon(activity.status)
+            {recentActivity.length === 0 ? (
+              <div key="empty" className="text-center text-muted-foreground py-8">
+                <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p>No recent activity</p>
+              </div>
+            ) : (
+              <ul className="space-y-4">
+                {recentActivity.map((activity) => {
+                  const ActivityIcon = getActivityIcon(activity.type)
+                  const StatusIcon = getStatusIcon(activity.status)
 
-                    return (
-                      <motion.li
-                        key={activity.id}
-                        variants={itemVariants}
-                        className="p-4 border rounded-lg bg-background/40 backdrop-blur hover:bg-muted/60 transition-all duration-200"
-                        whileHover={{ x: 2 }}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-primary/10 p-2 mt-1 text-primary">
-                            <ActivityIcon className="h-5 w-5" />
-                          </div>
-                          <div className="space-y-1.5">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-foreground capitalize">{activity.type}</span>
-                              <StatusIcon className={`h-4 w-4 ${getStatusColor(activity.status)}`} />
-                            </div>
-                            <p className="text-sm text-muted-foreground">{activity.details}</p>
-                            <p className="text-xs text-muted-foreground/80">{formatTime(activity.timestamp)}</p>
-                          </div>
+                  return (
+                    <li
+                      key={activity.id}
+                      className="p-4 border rounded-lg bg-background/40 backdrop-blur"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-full bg-primary/10 p-2 mt-1 text-primary">
+                          <ActivityIcon className="h-5 w-5" />
                         </div>
-                      </motion.li>
-                    )
-                  })}
-                </motion.ul>
-              )}
-            </AnimatePresence>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-foreground capitalize">{activity.type}</span>
+                            <StatusIcon className={`h-4 w-4 ${getStatusColor(activity.status)}`} />
+                          </div>
+                          <p className="text-sm text-muted-foreground">{activity.details}</p>
+                          <p className="text-xs text-muted-foreground/80">{formatTime(activity.timestamp)}</p>
+                        </div>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
           </ScrollArea>
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   )
 }

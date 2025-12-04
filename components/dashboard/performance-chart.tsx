@@ -1,8 +1,8 @@
 "use client"
 
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 
 const data = [
   { erp: "NetSuite", avgTime: 245, count: 1200 },
@@ -15,7 +15,7 @@ const data = [
 
 export function PerformanceChart() {
   return (
-    <Card className="hover:glow transition-all duration-300">
+    <Card>
       <CardHeader>
         <CardTitle>Performance by ERP System</CardTitle>
       </CardHeader>

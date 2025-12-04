@@ -1,7 +1,6 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
-import { BarChart3, ChevronLeft, ChevronRight, FileText, HelpCircle, LogOut, Menu, Settings, X, Zap } from "lucide-react"
+import { BarChart3, ChevronLeft, ChevronRight, FileText, HelpCircle, LogOut, Menu, Settings, X } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -16,7 +15,7 @@ const navigation = [
 		name: "Dashboard",
 		href: "/dashboard",
 		icon: BarChart3,
-		description: "View your transformation analytics",
+		description: "Overview, metrics, and recent activity",
 	},
 	// {
 	// 	name: "Transform Data",
@@ -28,13 +27,13 @@ const navigation = [
 		name: "File Manager",
 		href: "/files",
 		icon: FileText,
-		description: "Manage your transformed files",
+		description: "Upload, process, and export",
 	},
 	{
 		name: "Admin",
 		href: "/admin",
 		icon: Settings,
-		description: "Access organization admin page",
+		description: "Organization settings",
 	},
 ]
 
@@ -90,32 +89,24 @@ export function AppSidebar() {
 					variant="ghost"
 					size="sm"
 					onClick={() => setMobileOpen(true)}
-					className="fixed top-4 right-4 z-50 lg:hidden bg-white shadow-md"
+					className="fixed top-4 right-4 z-50 lg:hidden bg-background border border-border"
 				>
 					<Menu className="w-5 h-5" />
 				</Button>
 			)}
 
 			{/* Mobile Overlay */}
-			<AnimatePresence>
-				{isMobile && mobileOpen && (
-					<motion.div
-						key="sidebar-overlay"
-						className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 0.6 }}
-						exit={{ opacity: 0 }}
-						transition={{ duration: 0.2 }}
-						onClick={() => setMobileOpen(false)}
-					/>
-				)}
-			</AnimatePresence>
+			{isMobile && mobileOpen && (
+				<div
+					className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+					onClick={() => setMobileOpen(false)}
+				/>
+			)}
 
 			{/* Sidebar */}
-			<motion.aside
-				layout
+			<aside
 				className={cn(
-					"flex flex-col h-screen bg-white border-r border-gray-200 shadow-sm transition-all duration-300",
+					"flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-sm",
 					isMobile ? [
 						"fixed left-0 top-0 z-50 w-72",
 						mobileOpen ? "translate-x-0" : "-translate-x-full"
@@ -124,9 +115,6 @@ export function AppSidebar() {
 						collapsed ? "w-16" : "w-72"
 					]
 				)}
-				initial={{ opacity: 0, x: -32 }}
-				animate={{ opacity: 1, x: 0 }}
-				transition={{ duration: 0.35 }}
 			>
 				{isMobile && (
 					<Button
@@ -138,7 +126,7 @@ export function AppSidebar() {
 						<X className="w-4 h-4" />
 					</Button>
 				)}
-				<div className="flex items-center justify-between p-6 border-b border-gray-100">
+				<div className="flex items-center justify-between p-4 border-b border-sidebar-border/60">
 					{!collapsed && (
 						<div className="flex items-center space-x-3">
 							<div className="relative w-10 h-10">
@@ -151,8 +139,8 @@ export function AppSidebar() {
 								/>
 							</div>
 							<div>
-								<span className="font-playfair font-bold text-xl text-gray-900">Infiniqon</span>
-								<p className="text-xs text-gray-500 mt-0.5">Data Transformation</p>
+								<span className="font-playfair font-bold text-xl">Infiniqon</span>
+								<p className="text-xs text-muted-foreground mt-0.5">Data Platform</p>
 							</div>
 						</div>
 					)}
@@ -160,59 +148,53 @@ export function AppSidebar() {
 						variant="ghost"
 						size="sm"
 						onClick={() => setCollapsed(!collapsed)}
-						className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+						className="text-muted-foreground hover:bg-muted"
 					>
 						{collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
 					</Button>
 				</div>
 
-				<motion.nav
-					className="flex-1 p-4 space-y-2"
-					variants={navContainer}
-					initial="hidden"
-					animate="show"
-				>
+				<nav className="flex-1 p-3 space-y-1">
 					{navigation.map((item) => {
 						const isActive = pathname === item.href
 						return (
 							<Link key={item.name} href={item.href}>
-								<motion.div
-									variants={navItem}
+								<div
 									className={cn(
-										"flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+										"flex items-center space-x-3 px-3 py-2 rounded-lg",
 										isActive
-											? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-											: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
-										collapsed && "justify-center px-3",
+											? "bg-accent/10 text-foreground border border-accent/30"
+											: "text-muted-foreground hover:bg-muted",
+										collapsed && "justify-center px-2",
 									)}
 								>
-									<item.icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-emerald-600" : "")} />
+									<item.icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-accent" : "")} />
 									{!collapsed && (
 										<div className="flex-1">
 											<div className="font-medium">{item.name}</div>
-											<div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+											<div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>
 										</div>
 									)}
-								</motion.div>
+								</div>
 							</Link>
 						)
 					})}
-				</motion.nav>
+				</nav>
 
-				<div className="p-4 border-t border-gray-100">
+				<div className="p-4 border-t border-sidebar-border/60">
 					{!collapsed && (
 						<div className="space-y-3">
 							{isAuthenticated && (
 								<div className="px-4 py-2">
-									<div className="text-xs text-gray-500 mb-2">Signed in as:</div>
-									<div className="text-sm font-medium text-gray-900 truncate">
+									<div className="text-xs text-muted-foreground mb-2">Signed in as</div>
+									<div className="text-sm font-medium truncate">
 										{user?.email || 'User'}
 									</div>
 								</div>
 							)}
 							<Link
 								href="/help"
-								className="flex items-center space-x-3 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+								className="flex items-center space-x-3 px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
 							>
 								<HelpCircle className="w-4 h-4" />
 								<span className="text-sm">Help & Support</span>
@@ -220,16 +202,16 @@ export function AppSidebar() {
 							{isAuthenticated && (
 								<Button
 									onClick={handleLogout}
-									variant="ghost"
-									className="w-full flex items-center space-x-3 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors justify-start"
+									variant="outline"
+									className="w-full flex items-center space-x-3 px-4 py-2 text-destructive hover:bg-destructive/10 rounded-lg justify-start"
 								>
 									<LogOut className="w-4 h-4" />
 									<span className="text-sm">Logout</span>
 								</Button>
 							)}
-							<div className="text-xs text-gray-400 text-center">
+							<div className="text-xs text-muted-foreground text-center">
 								<div className="font-medium">Infiniqon Platform</div>
-								<div className="mt-1">Professional Data Transformation</div>
+								<div className="mt-1">Data Transformation</div>
 							</div>
 						</div>
 					)}
@@ -237,9 +219,9 @@ export function AppSidebar() {
 						<div className="flex flex-col items-center space-y-2">
 							<Button
 								onClick={handleLogout}
-								variant="ghost"
+								variant="outline"
 								size="sm"
-								className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
+								className="text-destructive hover:bg-destructive/10 p-2"
 								title="Logout"
 							>
 								<LogOut className="w-4 h-4" />
@@ -247,7 +229,7 @@ export function AppSidebar() {
 						</div>
 					)}
 				</div>
-			</motion.aside>
+			</aside>
 		</div>
 	)
 }

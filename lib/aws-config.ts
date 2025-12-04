@@ -1,7 +1,7 @@
 // AWS Configuration for CleanFlowAI
 export const AWS_CONFIG = {
   // API Gateway
-  API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "https://67ixv0uxie.execute-api.ap-south-1.amazonaws.com/prod",
+  API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "https://9joy54ppg5.execute-api.ap-south-1.amazonaws.com/prod",
 
   // AWS Cognito
   COGNITO: {

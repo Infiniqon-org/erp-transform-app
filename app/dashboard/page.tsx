@@ -87,7 +87,7 @@ export default function DashboardPage() {
   return (
     <AuthGuard>
       <MainLayout>
-        <div className="space-y-6 slide-in">
+        <div className="space-y-6">
           <DashboardHeader />
 
           <MetricsGrid />
@@ -98,7 +98,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-4 lg:space-y-6">
-              <SystemHealthCard />
+              {/* <SystemHealthCard /> */}
               <ActivityFeed />
             </div>
           </div>

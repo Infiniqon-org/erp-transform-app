@@ -97,7 +97,7 @@ export function DownloadFormatModal({
                 {formatOptions.map((option) => {
                   const Icon = option.icon
                   return (
-                    <SelectItem key={option.value} value={option.value} className="py-12">
+                    <SelectItem key={option.value} value={option.value} className="py-2">
                       <div className="flex items-center gap-3">
                         <Icon className="h-4 w-4" />
                         <div className="flex flex-col items-start">

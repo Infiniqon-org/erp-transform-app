@@ -2,14 +2,14 @@ import "./globals.css"
 
 import { Inter, Playfair_Display } from "next/font/google"
 
+import AppThemeToggle from "@/components/ui/app-theme-toggle"
 import { AuthProvider } from "@/components/providers/auth-provider"
 import type { Metadata } from "next"
 import type React from "react"
 import { ReduxProvider } from "@/components/providers/redux-provider"
-import { Toaster } from "@/components/ui/toaster"
-import { TransitionProvider } from "@/components/layout/transition-provider"
-
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,11 +36,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfairDisplay.variable}`}>
-      <body className="font-sans antialiased bg-slate-50">
+    <html lang="en" className={`${inter.variable} ${playfairDisplay.variable}`} suppressHydrationWarning>
+      <body className="font-sans antialiased bg-background text-foreground min-h-screen">
         <ReduxProvider>
           <AuthProvider>
-            <TransitionProvider>{children}</TransitionProvider>
+            <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+              {children}
+              <AppThemeToggle />
+            </ThemeProvider>
           </AuthProvider>
         </ReduxProvider>
         <Toaster />
