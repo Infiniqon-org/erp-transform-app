@@ -73,6 +73,22 @@ const STATUS_OPTIONS = [
   { label: "Failed", value: "FAILED" },
 ]
 
+const SOURCE_OPTIONS = [
+  { label: "Local File", value: "file" },
+  { label: "QuickBooks Online", value: "quickbooks" },
+  { label: "Oracle Fusion", value: "oracle" },
+  { label: "SAP ERP", value: "sap" },
+  { label: "Microsoft Dynamics", value: "dynamics" },
+  { label: "NetSuite", value: "netsuite" },
+  { label: "Workday", value: "workday" },
+  { label: "Infor M3", value: "infor-m3" },
+  { label: "Infor LN", value: "infor-ln" },
+  { label: "Epicor Kinetic", value: "epicor" },
+  { label: "QAD ERP", value: "qad" },
+  { label: "IFS Cloud", value: "ifs" },
+  { label: "Sage Intacct", value: "sage" },
+]
+
 export default function FilesPage() {
   return (
     <AuthGuard>
@@ -109,7 +125,7 @@ function FilesPageContent() {
   const [pushQBModalOpen, setPushQBModalOpen] = useState(false)
   const [fileToPush, setFileToPush] = useState<FileStatusResponse | null>(null)
   const [activeSection, setActiveSection] = useState<"upload" | "explorer">("upload")
-  const [uploadSource, setUploadSource] = useState<"file" | "quickbooks">("file")
+  const [selectedSource, setSelectedSource] = useState("file")
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
@@ -483,41 +499,25 @@ function FilesPageContent() {
         {/* File Upload Section */}
         {activeSection === "upload" && (
           <div className="space-y-4">
-            {/* Source Selection */}
-            <div className="flex items-center gap-4 border-b pb-4">
-              <span className="text-sm text-muted-foreground">Source:</span>
-              <div className="inline-flex rounded-md border">
-                <button
-                  onClick={() => setUploadSource("file")}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors first:rounded-l-md last:rounded-r-md",
-                    uploadSource === "file"
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  )}
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  Local File
-                </button>
-                <button
-                  onClick={() => setUploadSource("quickbooks")}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors first:rounded-l-md last:rounded-r-md border-l",
-                    uploadSource === "quickbooks"
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  )}
-                >
-                  <Network className="h-3.5 w-3.5" />
-                  QuickBooks
-                </button>
+            {/* Header Row: Source selector + AI toggle */}
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">Source:</span>
+                <Select value={selectedSource} onValueChange={setSelectedSource}>
+                  <SelectTrigger className="w-[200px] h-9">
+                    <SelectValue placeholder="Select source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-
-            {uploadSource === "file" ? (
-              <div className="flex flex-col items-center">
-                {/* AI Toggle - centered above upload zone */}
-                <div className="flex items-center gap-3 mb-4">
+              {selectedSource === "file" && (
+                <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">AI Processing:</span>
                   <div className="inline-flex rounded-md border">
                     <button
@@ -542,56 +542,54 @@ function FilesPageContent() {
                     </button>
                   </div>
                 </div>
+              )}
+            </div>
 
-                {/* Upload Zone - prominent and centered */}
-                <div
-                  className={cn(
-                    "w-full max-w-lg flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-12 transition-all cursor-pointer",
-                    dragActive 
-                      ? "border-primary bg-primary/5 scale-[1.02]" 
-                      : "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50"
-                  )}
-                  onDragEnter={handleDrag}
-                  onDragOver={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDrop={handleDrop}
-                  onClick={() => !uploading && fileInputRef.current?.click()}
-                >
-                  {uploading ? (
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="relative">
-                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm font-medium">Uploading...</p>
-                        <p className="text-2xl font-bold text-primary">{uploadProgress}%</p>
-                      </div>
-                      <Progress value={uploadProgress} className="w-48" />
+            {/* Content Area */}
+            {selectedSource === "file" ? (
+              <div
+                className={cn(
+                  "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-12 transition-all cursor-pointer",
+                  dragActive 
+                    ? "border-primary bg-primary/5 scale-[1.01]" 
+                    : "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50"
+                )}
+                onDragEnter={handleDrag}
+                onDragOver={handleDrag}
+                onDragLeave={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => !uploading && fileInputRef.current?.click()}
+              >
+                {uploading ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    <div className="text-center">
+                      <p className="text-sm font-medium">Uploading...</p>
+                      <p className="text-2xl font-bold text-primary">{uploadProgress}%</p>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3 text-center">
-                      <div className="rounded-full bg-primary/10 p-4">
-                        <Upload className="h-8 w-8 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-base font-medium">Drop your file here</p>
-                        <p className="text-sm text-muted-foreground">or click to browse</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Supports CSV, XLSX, XLS
-                      </p>
+                    <Progress value={uploadProgress} className="w-48" />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <div className="rounded-full bg-primary/10 p-4">
+                      <Upload className="h-8 w-8 text-primary" />
                     </div>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv,.xlsx,.xls"
-                    className="hidden"
-                    onChange={handleFileInput}
-                  />
-                </div>
+                    <div>
+                      <p className="text-base font-medium">Drop your file here</p>
+                      <p className="text-sm text-muted-foreground">or click to browse</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Supports CSV, XLSX, XLS</p>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  className="hidden"
+                  onChange={handleFileInput}
+                />
               </div>
-            ) : (
+            ) : selectedSource === "quickbooks" ? (
               <QuickBooksImport
                 onImportComplete={handleQuickBooksImportComplete}
                 onNotification={(message, type) => {
@@ -602,6 +600,19 @@ function FilesPageContent() {
                   })
                 }}
               />
+            ) : (
+              <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-xl bg-muted/5">
+                <div className="rounded-full bg-muted p-4 mb-4">
+                  <Network className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">
+                  {SOURCE_OPTIONS.find((e) => e.value === selectedSource)?.label}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-6 max-w-md text-center">
+                  Securely import your financial data directly from your ERP system.
+                </p>
+                <Button disabled>Connect</Button>
+              </div>
             )}
           </div>
         )}
