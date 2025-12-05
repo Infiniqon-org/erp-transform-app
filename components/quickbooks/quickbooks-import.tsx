@@ -183,27 +183,27 @@ export default function QuickBooksImport({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="flex items-center justify-center min-h-[500px] py-16">
+        <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 min-h-[500px] p-8">
       {/* Error Alert */}
       {error && (
-        <Alert variant="destructive" className="py-2">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="text-sm">{error}</AlertDescription>
+        <Alert variant="destructive" className="py-3">
+          <AlertCircle className="h-5 w-5" />
+          <AlertDescription className="text-base">{error}</AlertDescription>
         </Alert>
       )}
 
       {/* Success Alert */}
       {importResult && (
-        <Alert className="border-green-200 bg-green-50 py-2">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-sm text-green-900">
+        <Alert className="border-green-200 bg-green-50 py-3">
+          <CheckCircle2 className="h-5 w-5 text-green-600" />
+          <AlertDescription className="text-base text-green-900">
             Imported {importResult.records_imported} records • {importResult.filename}
           </AlertDescription>
         </Alert>
@@ -211,45 +211,46 @@ export default function QuickBooksImport({
 
       {/* Not Connected State */}
       {!connected ? (
-        <div className="flex flex-col items-center justify-center py-6 text-center">
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
-            <Network className="h-6 w-6 text-green-600" />
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
+            <Network className="h-10 w-10 text-green-600" />
           </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            Connect QuickBooks to import data directly
+          <h3 className="text-xl font-medium mb-2">QuickBooks Online</h3>
+          <p className="text-lg text-muted-foreground mb-6 max-w-md">
+            Connect your QuickBooks account to import data directly
           </p>
-          <Button onClick={connectQuickBooks} size="sm" className="bg-green-600 hover:bg-green-700">
-            <ExternalLink className="mr-2 h-4 w-4" />
+          <Button onClick={connectQuickBooks} size="lg" className="bg-green-600 hover:bg-green-700 px-8 py-6 text-base">
+            <ExternalLink className="mr-2 h-5 w-5" />
             Connect QuickBooks
           </Button>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Connected Status */}
-          <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-900">Connected</span>
+          <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <span className="text-base font-medium text-green-900">Connected</span>
               {connectionInfo?.realm_id && (
-                <span className="text-xs text-green-700">({connectionInfo.realm_id})</span>
+                <span className="text-sm text-green-700">({connectionInfo.realm_id})</span>
               )}
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={disconnectQuickBooks}
-              className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="h-8 text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
             >
-              <Trash2 className="h-3 w-3 mr-1" />
+              <Trash2 className="h-4 w-4 mr-1" />
               Disconnect
             </Button>
           </div>
 
           {/* Import Form */}
-          <div className="grid gap-3">
-            <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs">Entity</Label>
+                <Label className="text-sm mb-2 block">Entity</Label>
                 <Select
                   value={importConfig.entity}
                   onValueChange={(value) =>
@@ -259,7 +260,7 @@ export default function QuickBooksImport({
                     })
                   }
                 >
-                  <SelectTrigger className="h-8 text-sm">
+                  <SelectTrigger className="h-10 text-base">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -272,7 +273,7 @@ export default function QuickBooksImport({
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">Max Records</Label>
+                <Label className="text-sm mb-2 block">Max Records</Label>
                 <Input
                   type="number"
                   value={importConfig.limit}
@@ -281,28 +282,28 @@ export default function QuickBooksImport({
                   }
                   min={1}
                   max={10000}
-                  className="h-8 text-sm"
+                  className="h-10 text-base"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs">From Date</Label>
+                <Label className="text-sm mb-2 block">From Date</Label>
                 <Input
                   type="date"
                   value={importConfig.dateFrom}
                   onChange={(e) => setImportConfig({ ...importConfig, dateFrom: e.target.value })}
-                  className="h-8 text-sm"
+                  className="h-10 text-base"
                 />
               </div>
               <div>
-                <Label className="text-xs">To Date</Label>
+                <Label className="text-sm mb-2 block">To Date</Label>
                 <Input
                   type="date"
                   value={importConfig.dateTo}
                   onChange={(e) => setImportConfig({ ...importConfig, dateTo: e.target.value })}
-                  className="h-8 text-sm"
+                  className="h-10 text-base"
                 />
               </div>
             </div>
@@ -310,17 +311,16 @@ export default function QuickBooksImport({
             <Button
               onClick={importFromQuickBooks}
               disabled={isImporting}
-              className="w-full bg-green-600 hover:bg-green-700"
-              size="sm"
+              className="w-full bg-green-600 hover:bg-green-700 h-12 text-base"
             >
               {isImporting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Importing...
                 </>
               ) : (
                 <>
-                  <Download className="mr-2 h-4 w-4" />
+                  <Download className="mr-2 h-5 w-5" />
                   Import from QuickBooks
                 </>
               )}

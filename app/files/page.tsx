@@ -549,7 +549,7 @@ function FilesPageContent() {
             {selectedSource === "file" ? (
               <div
                 className={cn(
-                  "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-12 transition-all cursor-pointer",
+                  "flex flex-col items-center justify-center rounded-xl border-2 border-dashed min-h-[500px] p-20 transition-all cursor-pointer",
                   dragActive 
                     ? "border-primary bg-primary/5 scale-[1.01]" 
                     : "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50"
@@ -561,24 +561,24 @@ function FilesPageContent() {
                 onClick={() => !uploading && fileInputRef.current?.click()}
               >
                 {uploading ? (
-                  <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                  <div className="flex flex-col items-center gap-8">
+                    <Loader2 className="h-20 w-20 animate-spin text-primary" />
                     <div className="text-center">
-                      <p className="text-sm font-medium">Uploading...</p>
-                      <p className="text-2xl font-bold text-primary">{uploadProgress}%</p>
+                      <p className="text-lg font-medium">Uploading...</p>
+                      <p className="text-4xl font-bold text-primary mt-2">{uploadProgress}%</p>
                     </div>
-                    <Progress value={uploadProgress} className="w-48" />
+                    <Progress value={uploadProgress} className="w-72 h-3" />
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-3 text-center">
-                    <div className="rounded-full bg-primary/10 p-4">
-                      <Upload className="h-8 w-8 text-primary" />
+                  <div className="flex flex-col items-center gap-6 text-center">
+                    <div className="rounded-full bg-primary/10 p-8">
+                      <Upload className="h-16 w-16 text-primary" />
                     </div>
-                    <div>
-                      <p className="text-base font-medium">Drop your file here</p>
-                      <p className="text-sm text-muted-foreground">or click to browse</p>
+                    <div className="space-y-2">
+                      <p className="text-xl font-medium">Drop your file here</p>
+                      <p className="text-lg text-muted-foreground">or click to browse</p>
                     </div>
-                    <p className="text-xs text-muted-foreground">Supports CSV, XLSX, XLS</p>
+                    <p className="text-base text-muted-foreground mt-4">Supports CSV, XLSX, XLS</p>
                   </div>
                 )}
                 <input
@@ -590,28 +590,30 @@ function FilesPageContent() {
                 />
               </div>
             ) : selectedSource === "quickbooks" ? (
-              <QuickBooksImport
-                onImportComplete={handleQuickBooksImportComplete}
-                onNotification={(message, type) => {
-                  toast({
-                    title: type === "success" ? "Success" : "Error",
-                    description: message,
-                    variant: type === "error" ? "destructive" : "default",
-                  })
-                }}
-              />
+              <div className="min-h-[500px]">
+                <QuickBooksImport
+                  onImportComplete={handleQuickBooksImportComplete}
+                  onNotification={(message, type) => {
+                    toast({
+                      title: type === "success" ? "Success" : "Error",
+                      description: message,
+                      variant: type === "error" ? "destructive" : "default",
+                    })
+                  }}
+                />
+              </div>
             ) : (
-              <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-xl bg-muted/5">
-                <div className="rounded-full bg-muted p-4 mb-4">
-                  <Network className="h-8 w-8 text-muted-foreground" />
+              <div className="flex flex-col items-center justify-center min-h-[500px] p-20 border-2 border-dashed rounded-xl bg-muted/5">
+                <div className="rounded-full bg-muted p-8 mb-8">
+                  <Network className="h-16 w-16 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-medium mb-2">
+                <h3 className="text-2xl font-medium mb-4">
                   {SOURCE_OPTIONS.find((e) => e.value === selectedSource)?.label}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-6 max-w-md text-center">
+                <p className="text-lg text-muted-foreground mb-10 max-w-lg text-center">
                   Securely import your financial data directly from your ERP system.
                 </p>
-                <Button disabled>Connect</Button>
+                <Button disabled size="lg" className="px-8 py-6 text-base">Connect</Button>
               </div>
             )}
           </div>

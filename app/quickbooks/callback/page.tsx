@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 
@@ -9,7 +9,7 @@ import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
  * This component handles the redirect from Lambda after OAuth authorization
  * NOTE: The Lambda already exchanged the code for tokens, so we just show success!
  */
-export default function QuickBooksCallbackPage() {
+function QuickBooksCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing')
@@ -154,5 +154,29 @@ export default function QuickBooksCallbackPage() {
         )}
       </div>
     </div>
+  )
+}
+
+function CallbackLoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 font-sans">
+      <div className="bg-card border rounded-xl shadow-lg p-8 max-w-sm w-full">
+        <div className="text-center">
+          <div className="mb-5">
+            <Loader2 className="h-12 w-12 text-primary mx-auto animate-spin" />
+          </div>
+          <h2 className="text-lg font-semibold text-foreground mb-1">Loading...</h2>
+          <p className="text-sm text-muted-foreground">Please wait</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function QuickBooksCallbackPage() {
+  return (
+    <Suspense fallback={<CallbackLoadingFallback />}>
+      <QuickBooksCallbackContent />
+    </Suspense>
   )
 }
