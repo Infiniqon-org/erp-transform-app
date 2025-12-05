@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/hooks/useAuth'
 import { Mail, ArrowLeft, Shield, CheckCircle, Timer, RotateCcw } from 'lucide-react'
+import Image from 'next/image'
 
 interface EmailVerificationProps {
   email: string
@@ -67,45 +68,50 @@ export function EmailVerification({ email, onVerified, onBack }: EmailVerificati
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-20 dark:opacity-10">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-400 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-teal-400 rounded-full blur-3xl" />
       </div>
       
       {/* Grid pattern overlay */}
-      <div className="absolute inset-0 opacity-20" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-      }}></div>
+      <div className="absolute inset-0 opacity-[0.03] dark:opacity-5" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '40px 40px' }} />
 
-      <div className="relative z-10 w-full max-w-md animate-in slide-in-from-bottom-4 duration-1000">
+      <div className="relative z-10 w-full max-w-md">
         {/* Logo/Brand Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl mb-4 shadow-lg animate-pulse">
-            <Mail className="w-8 h-8 text-white" />
+          <div className="flex justify-center mb-4">
+            <div className="relative w-16 h-16">
+              <Image
+                src="/images/infiniqon-logo-light.png"
+                alt="Infiniqon"
+                width={64}
+                height={64}
+                className="rounded-xl object-contain"
+              />
+            </div>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Check Your Email
           </h1>
-          <p className="text-slate-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             We've sent a verification code to
           </p>
-          <p className="text-blue-300 font-medium text-sm mt-1">
+          <p className="text-cyan-600 dark:text-cyan-400 font-medium text-sm mt-1">
             {email}
           </p>
         </div>
 
-        <Card className="backdrop-blur-xl bg-white/10 border-white/20 shadow-2xl shadow-black/20 hover:shadow-black/30 transition-all duration-500">
+        <Card className="border border-border bg-card shadow-lg">
           <CardHeader className="space-y-1 pb-4">
-            <div className="flex items-center space-x-2 text-white/90">
-              <Shield className="w-5 h-5" />
+            <div className="flex items-center space-x-2 text-foreground">
+              <Shield className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
               <span className="text-lg font-semibold">Email Verification</span>
             </div>
             
             {/* Timer */}
-            <div className="flex items-center space-x-2 text-sm text-slate-400">
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Timer className="w-4 h-4" />
               <span>Code expires in {formatTime(timeLeft)}</span>
             </div>
@@ -115,7 +121,7 @@ export function EmailVerification({ email, onVerified, onBack }: EmailVerificati
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Verification Code Field */}
               <div className="space-y-2">
-                <Label htmlFor="code" className="text-white/90 font-medium">
+                <Label htmlFor="code" className="text-sm font-medium text-muted-foreground">
                   Verification Code
                 </Label>
                 <Input
@@ -124,33 +130,33 @@ export function EmailVerification({ email, onVerified, onBack }: EmailVerificati
                   placeholder="Enter 6-digit code"
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                  className="text-center text-2xl tracking-widest bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-200"
+                  className="text-center text-2xl tracking-widest h-14 border-input focus:border-primary focus:ring-2 focus:ring-ring"
                   required
                   maxLength={6}
                 />
-                <p className="text-xs text-slate-400 text-center">
+                <p className="text-xs text-muted-foreground text-center">
                   Enter the 6-digit code from your email
                 </p>
               </div>
 
               {/* Alerts */}
               {error && (
-                <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 animate-in slide-in-from-top-1 duration-300">
-                  <AlertDescription className="text-red-200">{error}</AlertDescription>
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
 
               {success && (
-                <Alert className="bg-green-500/10 border-green-500/20 animate-in slide-in-from-top-1 duration-300">
-                  <CheckCircle className="w-4 h-4" />
-                  <AlertDescription className="text-green-200">{success}</AlertDescription>
+                <Alert className="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <AlertDescription className="text-emerald-700 dark:text-emerald-300">{success}</AlertDescription>
                 </Alert>
               )}
 
               {/* Submit Button */}
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:transform-none group" 
+                className="w-full h-12 bg-cyan-600 hover:bg-cyan-700 dark:bg-cyan-600 dark:hover:bg-cyan-500 text-white font-semibold rounded-xl transition-all duration-200" 
                 disabled={isLoading || code.length !== 6}
               >
                 {isLoading ? (
@@ -169,14 +175,14 @@ export function EmailVerification({ email, onVerified, onBack }: EmailVerificati
 
             {/* Resend Code */}
             <div className="text-center space-y-3">
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Didn't receive the code?
               </p>
               <Button
                 variant="outline"
                 onClick={handleResendCode}
                 disabled={timeLeft > 0}
-                className="text-sm border-white/20 bg-white/5 hover:bg-white/10 text-white transition-all duration-300"
+                className="text-sm"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 {timeLeft > 0 ? `Resend in ${formatTime(timeLeft)}` : 'Resend Code'}
@@ -188,14 +194,14 @@ export function EmailVerification({ email, onVerified, onBack }: EmailVerificati
               variant="outline"
               onClick={onBack}
               disabled={isLoading}
-              className="w-full border-white/20 bg-white/5 hover:bg-white/10 text-white font-medium py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.02]"
+              className="w-full h-12 font-medium rounded-xl"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Sign Up
             </Button>
 
             {/* Footer */}
-            <div className="text-center text-xs text-slate-400">
+            <div className="text-center text-xs text-muted-foreground">
               <p>
                 Check your spam folder if you don't see the email
               </p>

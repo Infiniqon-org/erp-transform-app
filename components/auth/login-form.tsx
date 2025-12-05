@@ -8,6 +8,7 @@ import { LoadingDots, LoadingSpinner } from "@/components/ui/loading"
 import { useEffect, useState } from 'react'
 
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
@@ -54,8 +55,19 @@ export function LoginForm() {
 
   return (
     <div className="w-full">
-      {/* Header Section */}
+      {/* Header Section with Logo */}
       <div className="text-center mb-8">
+        <div className="flex justify-center mb-6">
+          <div className="relative w-16 h-16">
+            <Image
+              src="/images/infiniqon-logo-light.png"
+              alt="Infiniqon"
+              width={64}
+              height={64}
+              className="rounded-xl object-contain"
+            />
+          </div>
+        </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">
           Welcome back
         </h1>

@@ -140,7 +140,7 @@ export function AppSidebar() {
 							</div>
 							<div>
 								<span className="font-playfair font-bold text-xl">Infiniqon</span>
-								<p className="text-xs text-muted-foreground mt-0.5">Data Platform</p>
+								{/* <p className="text-xs text-muted-foreground mt-0.5">Data Platform</p> */}
 							</div>
 						</div>
 					)}
