@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
 import { useState } from "react"
 
 // Dummy data for members
@@ -56,7 +55,7 @@ const getStatusBadgeVariant = (status: string) => {
   }
 }
 
-export function OrganizationAdmin() {
+export function OrganizationSettings() {
   const [activeTab, setActiveTab] = useState("organization")
 
   return (

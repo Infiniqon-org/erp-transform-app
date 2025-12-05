@@ -30,8 +30,8 @@ const navigation = [
 		description: "Upload, process, and export",
 	},
 	{
-		name: "Admin",
-		href: "/admin",
+		name: "Settings",
+		href: "/settings",
 		icon: Settings,
 		description: "Organization settings",
 	},
