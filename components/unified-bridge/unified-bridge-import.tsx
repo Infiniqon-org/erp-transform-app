@@ -41,21 +41,6 @@ import {
 const VALID_EMAIL = 'kiranparthiban2004+test@gmail.com'
 const VALID_PASSWORD = 'TestPassword123!'
 
-// Default ERP systems available via Unified Bridge
-const DEFAULT_ERPS: UnifiedBridgeErp[] = [
-  { name: "SAP S/4HANA", available: true, file_count: 12 },
-  { name: "Oracle NetSuite", available: true, file_count: 8 },
-  { name: "Microsoft Dynamics 365", available: true, file_count: 15 },
-  { name: "Salesforce", available: true, file_count: 6 },
-  { name: "Workday", available: true, file_count: 9 },
-  { name: "QuickBooks Enterprise", available: true, file_count: 4 },
-  { name: "Sage Intacct", available: true, file_count: 7 },
-  { name: "Infor CloudSuite", available: true, file_count: 5 },
-  { name: "Epicor ERP", available: true, file_count: 3 },
-  { name: "Acumatica", available: false, file_count: 0 },
-  { name: "Odoo", available: false, file_count: 0 },
-]
-
 interface UnifiedBridgeImportProps {
   onImportComplete?: (uploadId: string) => void
   onNotification?: (message: string, type: "success" | "error") => void
@@ -129,18 +114,21 @@ export default function UnifiedBridgeImport({
     }
   }
 
-  // Load ERPs on mount
+  // Load ERPs from API
   const loadErps = useCallback(async () => {
-    if (!isAuthenticated) return
+    if (!isAuthenticated || !idToken) return
 
     setLoadingErps(true)
-    // Simulate loading delay for UX
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    // Use default ERP systems
-    setErps(DEFAULT_ERPS)
-    setLoadingErps(false)
-  }, [isAuthenticated])
+    try {
+      const response = await fileManagementAPI.getUnifiedBridgeErps(idToken)
+      setErps(response.erps || [])
+    } catch (error) {
+      console.error("Failed to load ERPs:", error)
+      onNotification?.("Failed to load ERP list", "error")
+    } finally {
+      setLoadingErps(false)
+    }
+  }, [isAuthenticated, idToken, onNotification])
 
   // Load files when ERP is selected
   const loadFiles = useCallback(async () => {
@@ -198,13 +186,15 @@ export default function UnifiedBridgeImport({
         idToken
       )
 
-      if (response.success) {
+      // Check for success - handle different response formats
+      const isSuccess = response.success !== false && (response.upload_id || response.rows)
+      
+      if (isSuccess) {
         setImportedFileId(selectedFile.id)
-        onNotification?.(
-          `Successfully imported ${selectedFile.name} (${response.rows.toLocaleString()} rows)`,
-          "success"
-        )
-        onImportComplete?.(response.upload_id)
+        // Call onImportComplete to refresh the file list - parent will show toast
+        if (response.upload_id) {
+          onImportComplete?.(response.upload_id)
+        }
       } else {
         onNotification?.(response.message || "Import failed", "error")
       }
@@ -356,7 +346,7 @@ export default function UnifiedBridgeImport({
       ) : (
         <>
           {/* Main Content */}
-          <div className="flex-1 flex flex-col lg:flex-row gap-4 pt-4">
+          <div className="flex-1 flex flex-col lg:flex-row gap-2 pt-4">
             {/* ERP Selection Panel */}
             <div className="lg:w-1/3 space-y-3">
               <div className="flex items-center gap-2">

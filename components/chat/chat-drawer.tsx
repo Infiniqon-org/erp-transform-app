@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
@@ -29,12 +30,45 @@ interface ChatDrawerProps {
   onClose: () => void
 }
 
+const PAGE_SUGGESTIONS: Record<string, string[]> = {
+  dashboard: [
+    'What do the dashboard metrics mean?',
+    'How is the DQ score calculated?',
+    'What does the monthly trends chart show?',
+  ],
+  files: [
+    'How do I upload a file?',
+    'What file formats are supported?',
+    'How do I download processed files?',
+  ],
+  admin: [
+    'How do I manage user permissions?',
+    'How to configure system settings?',
+    'How do I view audit logs?',
+  ],
+  default: [
+    'How do I upload a file?',
+    'What does the DQ score mean?',
+    'How to connect QuickBooks?',
+  ],
+}
+
+const getPageKey = (pathname: string): string => {
+  if (pathname.includes('/dashboard')) return 'dashboard'
+  if (pathname.includes('/files')) return 'files'
+  if (pathname.includes('/admin')) return 'admin'
+  return 'default'
+}
+
 export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const pathname = usePathname()
+  
+  const suggestions = PAGE_SUGGESTIONS[getPageKey(pathname)] || PAGE_SUGGESTIONS.default
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -204,11 +238,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                     Ask me anything about CleanFlowAI - file uploads, data quality, ERP integrations, and more.
                   </p>
                   <div className="space-y-2 w-full max-w-[280px]">
-                    {[
-                      'How do I upload a file?',
-                      'What does the DQ score mean?',
-                      'How to connect QuickBooks?',
-                    ].map((suggestion) => (
+                    {suggestions.map((suggestion) => (
                       <button
                         key={suggestion}
                         onClick={() => setInput(suggestion)}

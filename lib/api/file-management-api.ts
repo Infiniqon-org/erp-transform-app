@@ -191,10 +191,20 @@ class FileManagementAPI {
     return this.getFilePreviewFromS3(uploadId, authToken, 20)
   }
 
-  async startProcessing(uploadId: string, authToken: string): Promise<any> {
-    console.log('▶️ Starting processing:', uploadId)
+  async startProcessing(uploadId: string, authToken: string, options?: { use_custom_rules?: boolean; custom_rule_prompt?: string | null }): Promise<any> {
+    console.log('▶️ Starting processing:', uploadId, options?.use_custom_rules ? '(with custom rules)' : '')
+    const payload: Record<string, any> = {}
+    
+    if (options?.use_custom_rules) {
+      payload.use_custom_rules = true
+      if (options.custom_rule_prompt) {
+        payload.custom_rule_prompt = options.custom_rule_prompt
+      }
+    }
+    
     return this.makeRequest(ENDPOINTS.FILES_PROCESS(uploadId), authToken, { 
-      method: "POST"
+      method: "POST",
+      body: Object.keys(payload).length > 0 ? JSON.stringify(payload) : undefined
     })
   }
 
@@ -452,7 +462,7 @@ class FileManagementAPI {
     })
   }
 
-  async uploadFileComplete(file: File, authToken: string, useAI: boolean = false, onProgress?: (progress: number) => void, onStatusUpdate?: (status: FileStatusResponse) => void): Promise<FileStatusResponse> {
+  async uploadFileComplete(file: File, authToken: string, useAI: boolean = false, onProgress?: (progress: number) => void, onStatusUpdate?: (status: FileStatusResponse) => void, autoProcess: boolean = false): Promise<FileStatusResponse> {
     try {
       if (onProgress) onProgress(0)
       
@@ -466,7 +476,7 @@ class FileManagementAPI {
       
       // Check if backend wants us to use POST method (presignedPost with usePost flag)
       if (initResponse.usePost && initResponse.presignedPost) {
-        console.log('� Using presigned POST method')
+        console.log('🟢 Using presigned POST method')
         await this.uploadToS3Post(
           initResponse.presignedPost.url, 
           initResponse.presignedPost.fields, 
@@ -501,9 +511,26 @@ class FileManagementAPI {
       }
       
       console.log('✅ S3 upload complete')
-      if (onProgress) onProgress(50)
+      if (onProgress) onProgress(100)
 
-      // Step 3: Trigger processing using POST /files/{upload_id}/process
+      // Return upload status without auto-processing
+      if (!autoProcess) {
+        const uploadedStatus: FileStatusResponse = {
+          upload_id: initResponse.upload_id,
+          status: 'UPLOADED',
+          filename: file.name,
+          original_filename: file.name,
+          created_at: new Date().toISOString(),
+          rows_in: undefined,
+          rows_out: undefined,
+          dq_score: undefined,
+          execution_arn: undefined,
+        } as FileStatusResponse
+        if (onStatusUpdate) onStatusUpdate(uploadedStatus)
+        return uploadedStatus
+      }
+
+      // Step 3: Trigger processing using POST /files/{upload_id}/process (only if autoProcess is true)
       try {
         await this.startProcessing(initResponse.upload_id, authToken)
         console.log('✅ Processing triggered')

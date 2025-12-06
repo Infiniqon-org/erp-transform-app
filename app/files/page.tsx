@@ -22,6 +22,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/providers/auth-provider"
 import { AuthGuard } from "@/components/auth/auth-guard"
@@ -139,6 +141,8 @@ function FilesPageContent() {
   const [selectedErp, setSelectedErp] = useState("quickbooks")
   const [sortField, setSortField] = useState<"name" | "score" | "status" | "uploaded" | "updated">("uploaded")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+  const [useCustomRules, setUseCustomRules] = useState(false)
+  const [customRulePrompt, setCustomRulePrompt] = useState("")
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
@@ -230,12 +234,12 @@ function FilesPageContent() {
     }
 
     const extension = `.${file.name.split(".").pop()?.toLowerCase() || ""}`
-    const validExtensions = [".csv", ".xlsx", ".xls"]
+    const validExtensions = [".csv", ".xlsx", ".xls", ".json"]
 
     if (!validExtensions.includes(extension)) {
       toast({
         title: "Invalid file",
-        description: "Please upload a CSV or Excel file",
+        description: "Please upload a CSV, Excel, or JSON file",
         variant: "destructive",
       })
       return
@@ -258,15 +262,13 @@ function FilesPageContent() {
             }
             return [status, ...prev]
           })
-        }
+        },
+        false // Don't auto-process
       )
 
       toast({
-        title: "Success",
-        description:
-          finalStatus.status === "DQ_FIXED" || finalStatus.status === "COMPLETED"
-            ? `File processed with score: ${finalStatus.dq_score ?? 0}%`
-            : "File uploaded successfully",
+        title: "Upload Complete",
+        description: "File uploaded successfully. Click the play button to start processing.",
       })
 
       await loadFiles()
@@ -318,32 +320,22 @@ function FilesPageContent() {
   }
 
   const handleQuickBooksImportComplete = async (uploadId: string) => {
-    // Auto-start processing immediately after QuickBooks import
-    if (idToken && uploadId) {
-      try {
-        await fileManagementAPI.startProcessing(uploadId, idToken)
-        toast({
-          title: "Processing Started",
-          description: "Data quality processing started automatically",
-        })
-      } catch (error) {
-        console.error("Auto-processing failed:", error)
-        toast({
-          title: "Auto-Processing Failed",
-          description: "Import successful, but auto-processing failed to start",
-          variant: "destructive",
-        })
-      }
-    }
-    // Refresh file list
+    // Refresh file list - user will manually start processing
     loadFiles()
+    toast({
+      title: "Import Complete",
+      description: "File imported successfully. Click the play button to start processing.",
+    })
   }
 
   const handleStartProcessing = async (file: FileStatusResponse) => {
     if (!idToken) return
 
     try {
-      await fileManagementAPI.startProcessing(file.upload_id, idToken)
+      await fileManagementAPI.startProcessing(file.upload_id, idToken, {
+        use_custom_rules: useCustomRules,
+        custom_rule_prompt: useCustomRules ? customRulePrompt.trim() || null : null,
+      })
       toast({
         title: "Processing Started",
         description: `Starting data quality processing for ${file.original_filename || file.filename}...`,
@@ -512,20 +504,30 @@ function FilesPageContent() {
     switch (status) {
       case "DQ_FIXED":
       case "COMPLETED":
-        return "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20"
+        return "bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400 border-green-300 dark:border-green-500/30"
       case "FAILED":
       case "DQ_FAILED":
       case "REJECTED":
-        return "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20"
+        return "bg-red-100 dark:bg-red-500/20 text-red-800 dark:text-red-400 border-red-300 dark:border-red-500/30"
       case "DQ_RUNNING":
       case "NORMALIZING":
-        return "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20"
+        return "bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-400 border-blue-300 dark:border-blue-500/30"
       case "QUEUED":
       case "UPLOADED":
       case "DQ_DISPATCHED":
-        return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20"
+        return "bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-400 border-yellow-300 dark:border-yellow-500/30"
       default:
-        return "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20"
+        return "bg-gray-100 dark:bg-gray-500/20 text-gray-800 dark:text-gray-400 border-gray-300 dark:border-gray-500/30"
+    }
+  }
+
+  const getScoreBadgeColor = (score: number) => {
+    if (score >= 90) {
+      return "bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400 border-green-300 dark:border-green-500/30"
+    } else if (score >= 70) {
+      return "bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-400 border-yellow-300 dark:border-yellow-500/30"
+    } else {
+      return "bg-red-100 dark:bg-red-500/20 text-red-800 dark:text-red-400 border-red-300 dark:border-red-500/30"
     }
   }
 
@@ -605,6 +607,34 @@ function FilesPageContent() {
                     </SelectContent>
                   </Select>
                 )}
+              </div>
+            </div>
+
+            {/* Custom Rules Section */}
+            <div className="rounded-lg border bg-card p-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="use-custom-rules"
+                      checked={useCustomRules}
+                      onCheckedChange={(checked) => setUseCustomRules(checked === true)}
+                    />
+                    <Label htmlFor="use-custom-rules" className="text-sm font-medium cursor-pointer">
+                      Use custom rules (LLM)
+                    </Label>
+                  </div>
+                  <span className="text-xs text-muted-foreground hidden sm:block">
+                    Applied after deterministic + hybrid checks
+                  </span>
+                </div>
+                <Textarea
+                  className="min-h-[80px] text-sm resize-none"
+                  disabled={!useCustomRules}
+                  placeholder="Example: For any row where product_type is a TV and tv_cost < 10000, add invalid_tv_price and set status to Suspended."
+                  value={customRulePrompt}
+                  onChange={(e) => setCustomRulePrompt(e.target.value)}
+                />
               </div>
             </div>
 
@@ -805,7 +835,12 @@ function FilesPageContent() {
                         </TableCell>
                         <TableCell className="hidden xl:table-cell">
                           {typeof file.dq_score === "number" ? (
-                            <span className="text-sm tabular-nums">{file.dq_score.toFixed(1)}%</span>
+                            <Badge variant="outline" className={cn(
+                              "w-[58px] justify-center text-xs tabular-nums font-medium",
+                              getScoreBadgeColor(file.dq_score)
+                            )}>
+                              {file.dq_score.toFixed(1)}%
+                            </Badge>
                           ) : (
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
@@ -814,7 +849,7 @@ function FilesPageContent() {
                           {file.rows_clean || file.rows_in || 0}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={cn("text-[10px] sm:text-xs font-normal whitespace-nowrap", getStatusBadgeColor(file.status))}>
+                          <Badge variant="outline" className={cn("text-xs font-medium whitespace-nowrap px-2 py-0.5", getStatusBadgeColor(file.status))}>
                             {file.status || "UNKNOWN"}
                           </Badge>
                         </TableCell>
