@@ -63,6 +63,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import QuickBooksImport from "@/components/quickbooks/quickbooks-import"
+import UnifiedBridgeImport from "@/components/unified-bridge/unified-bridge-import"
 import { PushToERPModal } from "@/components/files/push-to-erp-modal"
 
 const STATUS_OPTIONS = [
@@ -76,6 +77,7 @@ const STATUS_OPTIONS = [
 
 const SOURCE_OPTIONS = [
   { label: "Local File", value: "file" },
+  { label: "Unified Bridge", value: "unified-bridge" },
   { label: "QuickBooks Online", value: "quickbooks" },
   { label: "Oracle Fusion", value: "oracle" },
   { label: "SAP ERP", value: "sap" },
@@ -610,6 +612,19 @@ function FilesPageContent() {
             ) : selectedSource === "quickbooks" ? (
               <div className="min-h-[300px] sm:min-h-[400px] lg:min-h-[500px]">
                 <QuickBooksImport
+                  onImportComplete={handleQuickBooksImportComplete}
+                  onNotification={(message, type) => {
+                    toast({
+                      title: type === "success" ? "Success" : "Error",
+                      description: message,
+                      variant: type === "error" ? "destructive" : "default",
+                    })
+                  }}
+                />
+              </div>
+            ) : selectedSource === "unified-bridge" ? (
+              <div className="min-h-[300px] sm:min-h-[400px] lg:min-h-[500px] rounded-xl border bg-card p-4">
+                <UnifiedBridgeImport
                   onImportComplete={handleQuickBooksImportComplete}
                   onNotification={(message, type) => {
                     toast({

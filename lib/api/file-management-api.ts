@@ -662,6 +662,99 @@ class FileManagementAPI {
     // Case 3: already plain JSON
     return JSON.parse(text)
   }
+
+  // ==================== Unified Bridge APIs ====================
+
+  /**
+   * Get list of ERPs available in Unified Bridge
+   */
+  async getUnifiedBridgeErps(token: string): Promise<UnifiedBridgeErpsResponse> {
+    const response = await fetch(`${API_BASE_URL}/unified-bridge/erps`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to get Unified Bridge ERPs: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  /**
+   * Get files available for a specific ERP in Unified Bridge
+   */
+  async getUnifiedBridgeFiles(erpName: string, token: string): Promise<UnifiedBridgeFilesResponse> {
+    const response = await fetch(`${API_BASE_URL}/unified-bridge/files?erp=${encodeURIComponent(erpName)}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to get Unified Bridge files: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  /**
+   * Import a file from Unified Bridge into the DQ pipeline
+   */
+  async importUnifiedBridgeFile(fileId: string, erpName: string, token: string): Promise<UnifiedBridgeImportResponse> {
+    const response = await fetch(`${API_BASE_URL}/unified-bridge/import`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        file_id: fileId,
+        erp: erpName,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to import Unified Bridge file: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+}
+
+// Unified Bridge Types
+export interface UnifiedBridgeErp {
+  name: string
+  available: boolean
+  file_count: number
+}
+
+export interface UnifiedBridgeErpsResponse {
+  erps: UnifiedBridgeErp[]
+}
+
+export interface UnifiedBridgeFile {
+  id: string
+  name: string
+  filename: string
+  rows: number
+  size_mb: number
+  entity: string
+  available: boolean
+}
+
+export interface UnifiedBridgeFilesResponse {
+  files: UnifiedBridgeFile[]
+}
+
+export interface UnifiedBridgeImportResponse {
+  success: boolean
+  upload_id: string
+  rows: number
+  message?: string
 }
 
 export const fileManagementAPI = new FileManagementAPI()
