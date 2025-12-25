@@ -108,6 +108,11 @@ export interface OverallDqReportResponse {
   months: Record<string, MonthlyDqStats>
 }
 
+export interface TopIssue {
+  violation: string
+  count: number
+}
+
 export interface MonthlyDqStats {
   files_processed: number
   files_deleted: number
@@ -116,6 +121,8 @@ export interface MonthlyDqStats {
   rows_out: number
   rows_fixed: number
   rows_quarantined: number
+  violation_counts?: Record<string, number>
+  top_issues?: TopIssue[]
 }
 
 class FileManagementAPI {
