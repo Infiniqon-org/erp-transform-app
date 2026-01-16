@@ -901,10 +901,17 @@ export interface FtpIngestionConfig {
   port?: number
   username?: string
   password?: string
-  protocol: 'ftp' | 'sftp'
+  protocol: 'ftp' | 'ftps' | 'ftps_implicit' | 'sftp'
   remote_path: string
   filename: string
-  private_key?: string
+  auth?: {
+    type: 'password' | 'ssh_key'
+    private_key?: string
+    key_passphrase?: string
+  }
+  tls?: {
+    verify_cert?: boolean
+  }
 }
 
 export interface TcpIngestionConfig {
@@ -915,6 +922,20 @@ export interface TcpIngestionConfig {
   max_size_bytes?: number
   request_data?: string
   filename: string
+  tls?: {
+    enabled?: boolean
+    verify_cert?: boolean
+    ca_cert?: string
+    client_cert?: string
+    client_key?: string
+  }
+  auth?: {
+    type: 'none' | 'token' | 'userpass'
+    token?: string
+    username?: string
+    password?: string
+    auth_command?: string
+  }
 }
 
 export interface HttpIngestionConfig {
@@ -923,12 +944,22 @@ export interface HttpIngestionConfig {
   headers?: Record<string, string>
   body?: Record<string, any> | string
   auth?: {
-    type: 'none' | 'bearer' | 'api_key' | 'basic'
+    type: 'none' | 'bearer' | 'api_key' | 'basic' | 'hmac' | 'cookie' | 'oidc'
     token?: string
     api_key?: string
     username?: string
     password?: string
     header_name?: string
+    // HMAC auth
+    access_key?: string
+    secret_key?: string
+    // Cookie auth
+    cookie?: string
+    // OIDC auth
+    token_url?: string
+    client_id?: string
+    client_secret?: string
+    scope?: string
   }
   timeout_seconds?: number
   filename: string

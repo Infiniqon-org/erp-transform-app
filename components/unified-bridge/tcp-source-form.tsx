@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Network, Loader2, CheckCircle } from "lucide-react"
+import { Network, Loader2, CheckCircle, Shield, Eye, EyeOff, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fileManagementAPI, type TcpIngestionConfig } from "@/lib/api/file-management-api"
 
 interface TcpSourceFormProps {
@@ -15,6 +17,8 @@ interface TcpSourceFormProps {
     onError: (error: string) => void
     disabled?: boolean
 }
+
+type TcpAuthType = "none" | "token" | "userpass"
 
 export default function TcpSourceForm({
     token,
@@ -31,6 +35,15 @@ export default function TcpSourceForm({
     const [filename, setFilename] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [isTesting, setIsTesting] = useState(false)
+    // TLS settings
+    const [tlsEnabled, setTlsEnabled] = useState(false)
+    const [tlsVerifyCert, setTlsVerifyCert] = useState(true)
+    // Auth settings
+    const [authType, setAuthType] = useState<TcpAuthType>("none")
+    const [authToken, setAuthToken] = useState("")
+    const [authUsername, setAuthUsername] = useState("")
+    const [authPassword, setAuthPassword] = useState("")
+    const [showPassword, setShowPassword] = useState(false)
 
     const handleTest = async () => {
         setIsTesting(true)
@@ -72,6 +85,28 @@ export default function TcpSourceForm({
                 filename,
             }
 
+            // Add TLS config if enabled
+            if (tlsEnabled) {
+                config.tls = {
+                    enabled: true,
+                    verify_cert: tlsVerifyCert,
+                }
+            }
+
+            // Add auth config
+            if (authType === "token") {
+                config.auth = {
+                    type: "token",
+                    token: authToken,
+                }
+            } else if (authType === "userpass") {
+                config.auth = {
+                    type: "userpass",
+                    username: authUsername,
+                    password: authPassword,
+                }
+            }
+
             const result = await fileManagementAPI.ingestFromTcp(config, token)
 
             onIngestionComplete({
@@ -111,6 +146,109 @@ export default function TcpSourceForm({
                         disabled={disabled || isLoading}
                     />
                 </div>
+            </div>
+
+            {/* TLS Settings */}
+            <div className="space-y-3 p-3 rounded-lg border">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        <Label htmlFor="tls-toggle" className="cursor-pointer">Enable TLS Encryption</Label>
+                    </div>
+                    <Switch
+                        id="tls-toggle"
+                        checked={tlsEnabled}
+                        onCheckedChange={setTlsEnabled}
+                        disabled={disabled || isLoading}
+                    />
+                </div>
+                {tlsEnabled && (
+                    <div className="flex items-center justify-between pt-2 border-t">
+                        <Label htmlFor="verify-cert" className="text-sm text-muted-foreground cursor-pointer">
+                            Verify server certificate
+                        </Label>
+                        <Switch
+                            id="verify-cert"
+                            checked={tlsVerifyCert}
+                            onCheckedChange={setTlsVerifyCert}
+                            disabled={disabled || isLoading}
+                        />
+                    </div>
+                )}
+            </div>
+
+            {/* Authentication */}
+            <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    <Label>Authentication</Label>
+                </div>
+                <Select value={authType} onValueChange={(v) => setAuthType(v as TcpAuthType)} disabled={disabled || isLoading}>
+                    <SelectTrigger>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="token">Token</SelectItem>
+                        <SelectItem value="userpass">Username & Password</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                {/* Token Auth */}
+                {authType === "token" && (
+                    <div className="space-y-2">
+                        <Label htmlFor="tcp-token">Auth Token</Label>
+                        <Input
+                            id="tcp-token"
+                            type="password"
+                            placeholder="Enter authentication token"
+                            value={authToken}
+                            onChange={(e) => setAuthToken(e.target.value)}
+                            disabled={disabled || isLoading}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Will send: AUTH {"{token}"}\n to the server
+                        </p>
+                    </div>
+                )}
+
+                {/* Username & Password Auth */}
+                {authType === "userpass" && (
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                            <Label htmlFor="tcp-username">Username</Label>
+                            <Input
+                                id="tcp-username"
+                                placeholder="username"
+                                value={authUsername}
+                                onChange={(e) => setAuthUsername(e.target.value)}
+                                disabled={disabled || isLoading}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="tcp-password">Password</Label>
+                            <div className="relative">
+                                <Input
+                                    id="tcp-password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="password"
+                                    value={authPassword}
+                                    onChange={(e) => setAuthPassword(e.target.value)}
+                                    disabled={disabled || isLoading}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Timeout & Delimiter */}

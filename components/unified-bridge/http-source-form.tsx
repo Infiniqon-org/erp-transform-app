@@ -17,7 +17,7 @@ interface HttpSourceFormProps {
     disabled?: boolean
 }
 
-type AuthType = "none" | "bearer" | "api_key" | "basic"
+type AuthType = "none" | "bearer" | "api_key" | "basic" | "hmac" | "cookie" | "oidc"
 
 export default function HttpSourceForm({
     token,
@@ -40,6 +40,16 @@ export default function HttpSourceForm({
     const [filename, setFilename] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [isTesting, setIsTesting] = useState(false)
+    // HMAC auth state
+    const [hmacAccessKey, setHmacAccessKey] = useState("")
+    const [hmacSecretKey, setHmacSecretKey] = useState("")
+    // Cookie auth state
+    const [cookieValue, setCookieValue] = useState("")
+    // OIDC auth state
+    const [oidcTokenUrl, setOidcTokenUrl] = useState("")
+    const [oidcClientId, setOidcClientId] = useState("")
+    const [oidcClientSecret, setOidcClientSecret] = useState("")
+    const [oidcScope, setOidcScope] = useState("openid")
 
     const addHeader = () => {
         setHeaders([...headers, { key: "", value: "" }])
@@ -98,6 +108,18 @@ export default function HttpSourceForm({
                 config.auth = { type: "api_key", api_key: apiKey, header_name: apiKeyHeader }
             } else if (authType === "basic") {
                 config.auth = { type: "basic", username: basicUsername, password: basicPassword }
+            } else if (authType === "hmac") {
+                config.auth = { type: "hmac", access_key: hmacAccessKey, secret_key: hmacSecretKey }
+            } else if (authType === "cookie") {
+                config.auth = { type: "cookie", cookie: cookieValue }
+            } else if (authType === "oidc") {
+                config.auth = { 
+                    type: "oidc", 
+                    token_url: oidcTokenUrl, 
+                    client_id: oidcClientId, 
+                    client_secret: oidcClientSecret,
+                    scope: oidcScope 
+                }
             }
 
             // Add body for POST
@@ -163,6 +185,9 @@ export default function HttpSourceForm({
                         <SelectItem value="bearer">Bearer Token</SelectItem>
                         <SelectItem value="api_key">API Key</SelectItem>
                         <SelectItem value="basic">Basic Auth</SelectItem>
+                        <SelectItem value="hmac">HMAC Signature</SelectItem>
+                        <SelectItem value="cookie">Cookie</SelectItem>
+                        <SelectItem value="oidc">OAuth2/OIDC</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -241,6 +266,99 @@ export default function HttpSourceForm({
                                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </Button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* HMAC Auth Fields */}
+            {authType === "hmac" && (
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                        <Label htmlFor="hmac-access">Access Key</Label>
+                        <Input
+                            id="hmac-access"
+                            placeholder="access_key"
+                            value={hmacAccessKey}
+                            onChange={(e) => setHmacAccessKey(e.target.value)}
+                            disabled={disabled || isLoading}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="hmac-secret">Secret Key</Label>
+                        <Input
+                            id="hmac-secret"
+                            type="password"
+                            placeholder="secret_key"
+                            value={hmacSecretKey}
+                            onChange={(e) => setHmacSecretKey(e.target.value)}
+                            disabled={disabled || isLoading}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Cookie Auth Fields */}
+            {authType === "cookie" && (
+                <div className="space-y-2">
+                    <Label htmlFor="cookie-value">Cookie Value</Label>
+                    <Input
+                        id="cookie-value"
+                        placeholder="session_id=abc123; auth_token=xyz"
+                        value={cookieValue}
+                        onChange={(e) => setCookieValue(e.target.value)}
+                        disabled={disabled || isLoading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                        Full cookie string to send with the request
+                    </p>
+                </div>
+            )}
+
+            {/* OIDC Auth Fields */}
+            {authType === "oidc" && (
+                <div className="space-y-3">
+                    <div className="space-y-2">
+                        <Label htmlFor="oidc-token-url">Token URL</Label>
+                        <Input
+                            id="oidc-token-url"
+                            placeholder="https://auth.example.com/oauth/token"
+                            value={oidcTokenUrl}
+                            onChange={(e) => setOidcTokenUrl(e.target.value)}
+                            disabled={disabled || isLoading}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                            <Label htmlFor="oidc-client-id">Client ID</Label>
+                            <Input
+                                id="oidc-client-id"
+                                placeholder="your-client-id"
+                                value={oidcClientId}
+                                onChange={(e) => setOidcClientId(e.target.value)}
+                                disabled={disabled || isLoading}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="oidc-client-secret">Client Secret</Label>
+                            <Input
+                                id="oidc-client-secret"
+                                type="password"
+                                placeholder="your-client-secret"
+                                value={oidcClientSecret}
+                                onChange={(e) => setOidcClientSecret(e.target.value)}
+                                disabled={disabled || isLoading}
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="oidc-scope">Scope</Label>
+                        <Input
+                            id="oidc-scope"
+                            placeholder="openid profile email"
+                            value={oidcScope}
+                            onChange={(e) => setOidcScope(e.target.value)}
+                            disabled={disabled || isLoading}
+                        />
                     </div>
                 </div>
             )}

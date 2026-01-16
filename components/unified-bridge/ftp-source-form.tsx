@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { FolderDown, Eye, EyeOff, Loader2, CheckCircle } from "lucide-react"
+import { FolderDown, Eye, EyeOff, Loader2, CheckCircle, Key } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Textarea } from "@/components/ui/textarea"
 import { fileManagementAPI, type FtpIngestionConfig } from "@/lib/api/file-management-api"
 
 interface FtpSourceFormProps {
@@ -16,6 +17,9 @@ interface FtpSourceFormProps {
     disabled?: boolean
 }
 
+type FtpProtocol = "ftp" | "ftps" | "ftps_implicit" | "sftp"
+type SftpAuthType = "password" | "ssh_key"
+
 export default function FtpSourceForm({
     token,
     onIngestionStart,
@@ -25,7 +29,7 @@ export default function FtpSourceForm({
 }: FtpSourceFormProps) {
     const [host, setHost] = useState("")
     const [port, setPort] = useState("21")
-    const [protocol, setProtocol] = useState<"ftp" | "sftp">("ftp")
+    const [protocol, setProtocol] = useState<FtpProtocol>("ftp")
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [showPassword, setShowPassword] = useState(false)
@@ -33,10 +37,20 @@ export default function FtpSourceForm({
     const [filename, setFilename] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [isTesting, setIsTesting] = useState(false)
+    // SFTP SSH Key auth
+    const [sftpAuthType, setSftpAuthType] = useState<SftpAuthType>("password")
+    const [sshPrivateKey, setSshPrivateKey] = useState("")
+    const [sshKeyPassphrase, setSshKeyPassphrase] = useState("")
 
-    const handleProtocolChange = (value: "ftp" | "sftp") => {
+    const handleProtocolChange = (value: FtpProtocol) => {
         setProtocol(value)
-        setPort(value === "sftp" ? "22" : "21")
+        if (value === "sftp") {
+            setPort("22")
+        } else if (value === "ftps_implicit") {
+            setPort("990")
+        } else {
+            setPort("21")
+        }
     }
 
     const handleTest = async () => {
@@ -82,6 +96,15 @@ export default function FtpSourceForm({
                 filename,
             }
 
+            // Add SSH key auth for SFTP
+            if (protocol === "sftp" && sftpAuthType === "ssh_key") {
+                config.auth = {
+                    type: "ssh_key",
+                    private_key: sshPrivateKey,
+                    key_passphrase: sshKeyPassphrase || undefined,
+                }
+            }
+
             const result = await fileManagementAPI.ingestFromFtp(config, token)
 
             onIngestionComplete({
@@ -104,7 +127,7 @@ export default function FtpSourceForm({
                 <RadioGroup
                     value={protocol}
                     onValueChange={handleProtocolChange}
-                    className="flex gap-4"
+                    className="flex flex-wrap gap-4"
                     disabled={disabled || isLoading}
                 >
                     <div className="flex items-center space-x-2">
@@ -112,8 +135,12 @@ export default function FtpSourceForm({
                         <Label htmlFor="ftp" className="cursor-pointer">FTP</Label>
                     </div>
                     <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="ftps" id="ftps" />
+                        <Label htmlFor="ftps" className="cursor-pointer">FTPS (TLS)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
                         <RadioGroupItem value="sftp" id="sftp" />
-                        <Label htmlFor="sftp" className="cursor-pointer">SFTP (Secure)</Label>
+                        <Label htmlFor="sftp" className="cursor-pointer">SFTP (SSH)</Label>
                     </div>
                 </RadioGroup>
             </div>
@@ -183,6 +210,61 @@ export default function FtpSourceForm({
                     </div>
                 </div>
             </div>
+
+            {/* SFTP Auth Type Selection */}
+            {protocol === "sftp" && (
+                <div className="space-y-3">
+                    <div className="space-y-2">
+                        <Label>SFTP Authentication</Label>
+                        <RadioGroup
+                            value={sftpAuthType}
+                            onValueChange={(v) => setSftpAuthType(v as SftpAuthType)}
+                            className="flex gap-4"
+                            disabled={disabled || isLoading}
+                        >
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="password" id="auth-password" />
+                                <Label htmlFor="auth-password" className="cursor-pointer">Password</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="ssh_key" id="auth-sshkey" />
+                                <Label htmlFor="auth-sshkey" className="cursor-pointer flex items-center gap-1">
+                                    <Key className="h-3 w-3" /> SSH Key
+                                </Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+
+                    {/* SSH Key Fields */}
+                    {sftpAuthType === "ssh_key" && (
+                        <div className="space-y-3 p-3 rounded-lg border bg-muted/50">
+                            <div className="space-y-2">
+                                <Label htmlFor="ssh-key">Private Key (PEM format)</Label>
+                                <Textarea
+                                    id="ssh-key"
+                                    placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"
+                                    value={sshPrivateKey}
+                                    onChange={(e) => setSshPrivateKey(e.target.value)}
+                                    disabled={disabled || isLoading}
+                                    rows={4}
+                                    className="font-mono text-xs"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="key-passphrase">Key Passphrase (optional)</Label>
+                                <Input
+                                    id="key-passphrase"
+                                    type="password"
+                                    placeholder="Enter passphrase if key is encrypted"
+                                    value={sshKeyPassphrase}
+                                    onChange={(e) => setSshKeyPassphrase(e.target.value)}
+                                    disabled={disabled || isLoading}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Remote Path */}
             <div className="space-y-2">
