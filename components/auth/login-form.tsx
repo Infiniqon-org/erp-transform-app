@@ -3,7 +3,7 @@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AnimatePresence, motion } from "framer-motion"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { CheckCircle, Eye, EyeOff, Lock, Mail, Shield } from "lucide-react"
+import { CheckCircle, Eye, EyeOff, Lock, Mail, Shield, Smartphone, Copy, Check } from "lucide-react"
 import { LoadingDots, LoadingSpinner } from "@/components/ui/loading"
 import { useEffect, useState } from 'react'
 
@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import QRCode from 'qrcode'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
@@ -33,29 +34,40 @@ export function LoginForm() {
   const [showMfaModal, setShowMfaModal] = useState(false)
   const [mfaCode, setMfaCode] = useState('')
   const [mfaError, setMfaError] = useState('')
-  const [isSendingCode, setIsSendingCode] = useState(false)
   const [isVerifyingMfa, setIsVerifyingMfa] = useState(false)
-  const { login } = useAuth()
+  
+  // MFA Setup state
+  const [showMfaSetupModal, setShowMfaSetupModal] = useState(false)
+  const [mfaSetupStep, setMfaSetupStep] = useState<'qr' | 'verify'>('qr')
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('')
+  const [secretCode, setSecretCode] = useState('')
+  const [setupMfaCode, setSetupMfaCode] = useState('')
+  const [mfaSetupSession, setMfaSetupSession] = useState<string | null>(null)
+  const [copiedSecret, setCopiedSecret] = useState(false)
+
+  const { login, verifyMfaCode, setupMfaWithSession, confirmMfaSetupWithSession, mfaRequired, mfaSession, cancelMfa } = useAuth()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // NOTE: Removed automatic MFA modal trigger - the login handler now explicitly
+  // decides whether to show MFA verification modal or MFA setup modal
+
   // Function to mask email - show first 2 chars, last char, and mask the middle
   const maskEmail = (email: string): string => {
     const [localPart, domain] = email.split('@')
     if (!localPart || !domain) return email
-    
+
     if (localPart.length <= 3) {
       return `${localPart[0]}***@${domain}`
     }
-    
+
     // Show first 2 characters, mask middle, show last character
     const firstPart = localPart.substring(0, 2)
     const lastChar = localPart[localPart.length - 1]
     const middleLength = localPart.length - 3
     const masked = '*'.repeat(Math.max(middleLength, 4))
-    
     return `${firstPart}${masked}${lastChar}@${domain}`
   }
 
@@ -67,33 +79,68 @@ export function LoginForm() {
 
     try {
       const result = await login(email, password)
-      
-      // Show MFA modal immediately without success message
-      setTimeout(() => {
+
+      if (result.mfaRequired) {
+        // Existing user with MFA - show verification modal
         setShowMfaModal(true)
         setIsLoading(false)
-      }, 1000)
+        return
+      }
+
+      if (result.mfaSetupRequired) {
+        // First time MFA setup required - show QR code
+        // Pass session directly to avoid React async state timing issue
+        await handleMfaSetupStart(result.session)
+        return
+      }
+
+      if (result.success) {
+        setSuccess('Login successful!')
+        setIsVerifying(true)
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 1500)
+      }
     } catch (err: any) {
       setError(err.message)
       setIsLoading(false)
     }
   }
 
-  const handleSendCode = () => {
-    setIsSendingCode(true)
-    setMfaError('')
-    
-    // Simulate sending code
-    setTimeout(() => {
-      setIsSendingCode(false)
-      setSuccess('Verification code sent to your email!')
-      setTimeout(() => setSuccess(''), 3000)
-    }, 1000)
+  // Start MFA setup - get QR code
+  const handleMfaSetupStart = async (session?: string) => {
+    try {
+      const sessionToUse = session || mfaSetupSession
+      if (!sessionToUse) {
+        throw new Error('No MFA setup session available')
+      }
+
+      // Call Cognito to get the secret code
+      const result = await setupMfaWithSession(sessionToUse, email)
+      
+      // Generate QR code image from the TOTP URI
+      const qrDataUrl = await QRCode.toDataURL(result.qrCodeUrl, {
+        width: 200,
+        margin: 2,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      })
+      
+      setQrCodeDataUrl(qrDataUrl)
+      setSecretCode(result.secretCode)
+      setMfaSetupSession(result.session) // Update with new session
+      setShowMfaSetupModal(true)
+      setMfaSetupStep('qr')
+      setIsLoading(false)
+      
+    } catch (err: any) {
+      setError(err.message || 'Failed to start MFA setup')
+      setIsLoading(false)
+    }
   }
 
-  const handleVerifyMfa = () => {
+  const handleVerifyMfa = async () => {
     setMfaError('')
-    
+
     // Check if code is 6 digits
     if (mfaCode.length !== 6 || !/^\d{6}$/.test(mfaCode)) {
       setMfaError('Please enter a valid 6-digit code')
@@ -101,15 +148,76 @@ export function LoginForm() {
     }
 
     setIsVerifyingMfa(true)
-    
-    // Simulate verification (any 6-digit code works)
-    setTimeout(() => {
+
+    try {
+      const result = await verifyMfaCode(mfaCode)
+
+      if (result.success) {
+        setIsVerifying(true)
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 1500)
+      }
+    } catch (err: any) {
+      setMfaError(err.message || 'Invalid verification code')
       setIsVerifyingMfa(false)
-      setIsVerifying(true)
-      setTimeout(() => {
-        window.location.href = '/dashboard'
-      }, 1500)
-    }, 1000)
+    }
+  }
+
+  const handleCloseMfaModal = () => {
+    setShowMfaModal(false)
+    setMfaCode('')
+    setMfaError('')
+    setIsVerifyingMfa(false)
+    cancelMfa()
+  }
+
+  const handleCloseMfaSetupModal = () => {
+    setShowMfaSetupModal(false)
+    setMfaSetupStep('qr')
+    setSetupMfaCode('')
+    setQrCodeDataUrl('')
+    setSecretCode('')
+    setMfaSetupSession(null)
+    cancelMfa()
+  }
+
+  const handleCopySecret = async () => {
+    try {
+      await navigator.clipboard.writeText(secretCode)
+      setCopiedSecret(true)
+      setTimeout(() => setCopiedSecret(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy secret')
+    }
+  }
+
+  const handleVerifySetupMfa = async () => {
+    if (setupMfaCode.length !== 6 || !/^\d{6}$/.test(setupMfaCode)) {
+      setMfaError('Please enter a valid 6-digit code')
+      return
+    }
+
+    if (!mfaSetupSession) {
+      setMfaError('MFA setup session expired. Please try again.')
+      return
+    }
+
+    setIsVerifyingMfa(true)
+    setMfaError('')
+
+    try {
+      const result = await confirmMfaSetupWithSession(mfaSetupSession, setupMfaCode, email)
+      if (result.success) {
+        setIsVerifying(true)
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 1500)
+      }
+    } catch (err: any) {
+      setMfaError(err.message || 'Verification failed')
+      setIsVerifyingMfa(false)
+    }
   }
 
   if (!mounted) return null
@@ -315,7 +423,7 @@ export function LoginForm() {
       </Card>
 
       {/* MFA Modal */}
-      <Dialog open={showMfaModal} onOpenChange={setShowMfaModal}>
+      <Dialog open={showMfaModal} onOpenChange={handleCloseMfaModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center justify-center mb-4">
@@ -325,11 +433,11 @@ export function LoginForm() {
             </div>
             <DialogTitle className="text-center text-2xl">Two-Factor Authentication</DialogTitle>
             <DialogDescription className="text-center">
-              We've sent a verification code to{' '}
+              Enter the 6-digit code from your authenticator app for{' '}
               <span className="font-medium text-foreground">{maskEmail(email)}</span>
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 mt-6">
             {/* MFA Code Input */}
             <div className="space-y-3">
@@ -350,6 +458,7 @@ export function LoginForm() {
                 }}
                 className="h-12 text-center text-2xl tracking-widest font-mono mt-2"
                 disabled={isVerifyingMfa || isVerifying}
+                autoFocus
               />
             </div>
 
@@ -381,24 +490,150 @@ export function LoginForm() {
               )}
             </Button>
 
-            {/* Send Code Button */}
-            <div className="text-center">
-              <Button
-                variant="link"
-                onClick={handleSendCode}
-                disabled={isSendingCode}
-                className="text-sm"
-              >
-                {isSendingCode ? (
-                  <div className="flex items-center space-x-2">
-                    <LoadingSpinner size="sm" />
-                    <span>Sending...</span>
-                  </div>
-                ) : (
-                  "Didn't receive code? Resend"
-                )}
-              </Button>
+            {/* Help text */}
+            <p className="text-center text-sm text-muted-foreground">
+              Open your authenticator app (Google Authenticator, Authy, etc.) to get the code
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* MFA Setup Modal (First-time setup with QR code) */}
+      <Dialog open={showMfaSetupModal} onOpenChange={handleCloseMfaSetupModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center justify-center mb-4">
+              <div className="rounded-full bg-primary/10 p-3">
+                <Smartphone className="w-8 h-8 text-primary" />
+              </div>
             </div>
+            <DialogTitle className="text-center text-2xl">
+              Set Up Two-Factor Authentication
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Scan the QR code with your authenticator app to enable 2FA
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            {/* Step 1: QR Code */}
+            {mfaSetupStep === 'qr' && (
+              <>
+                <div className="flex justify-center p-4 bg-white rounded-lg border">
+                  {qrCodeDataUrl ? (
+                    <img src={qrCodeDataUrl} alt="MFA QR Code" className="w-48 h-48" />
+                  ) : (
+                    <div className="w-48 h-48 flex items-center justify-center bg-gray-100 rounded">
+                      <div className="text-center text-sm text-muted-foreground">
+                        <Smartphone className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                        <p>Scan QR code in your</p>
+                        <p>authenticator app</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Manual entry option */}
+                {secretCode && secretCode !== 'Please complete setup to get your secret code' && (
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">
+                      Can't scan? Enter this code manually:
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
+                        {secretCode}
+                      </code>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleCopySecret}
+                        className="shrink-0"
+                      >
+                        {copiedSecret ? (
+                          <Check className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  onClick={() => setMfaSetupStep('verify')}
+                  className="w-full h-12"
+                >
+                  I've scanned the QR code
+                </Button>
+              </>
+            )}
+
+            {/* Step 2: Verify code */}
+            {mfaSetupStep === 'verify' && (
+              <>
+                <div className="space-y-3">
+                  <Label htmlFor="setup-mfa-code" className="text-sm font-medium">
+                    Enter the 6-digit code from your authenticator app
+                  </Label>
+                  <Input
+                    id="setup-mfa-code"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={setupMfaCode}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '')
+                      setSetupMfaCode(value)
+                    }}
+                    className="h-12 text-center text-2xl tracking-widest font-mono"
+                    disabled={isVerifyingMfa || isVerifying}
+                    autoFocus
+                  />
+                </div>
+
+                {mfaError && (
+                  <Alert variant="destructive" className="bg-red-50 border-red-200">
+                    <AlertDescription className="text-red-700">{mfaError}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setMfaSetupStep('qr')}
+                    className="flex-1"
+                    disabled={isVerifyingMfa || isVerifying}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleVerifySetupMfa}
+                    className="flex-1"
+                    disabled={setupMfaCode.length !== 6 || isVerifyingMfa || isVerifying}
+                  >
+                    {isVerifyingMfa ? (
+                      <div className="flex items-center space-x-2">
+                        <LoadingSpinner size="sm" />
+                        <span>Verifying...</span>
+                      </div>
+                    ) : isVerifying ? (
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Success!</span>
+                      </div>
+                    ) : (
+                      'Verify & Enable'
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
+
+            <p className="text-center text-xs text-muted-foreground">
+              Supported apps: Google Authenticator, Authy, Microsoft Authenticator
+            </p>
           </div>
         </DialogContent>
       </Dialog>

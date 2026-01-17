@@ -51,7 +51,7 @@ export function AnalyticsSection({ files }: AnalyticsSectionProps) {
             color: 'text-blue-400'
           },
           {
-            title: 'Avg DQ ui',
+            title: 'Avg DQ',
             value: `${avgDqScore.toFixed(1)}%`,
             change: avgDqScore > 90 ? '+5%' : avgDqScore > 70 ? '+2%' : '0%',
             icon: Gauge,
@@ -66,7 +66,7 @@ export function AnalyticsSection({ files }: AnalyticsSectionProps) {
             color: 'text-purple-400'
           },
           {
-            title: 'Issue Resolved',
+            title: 'Success Rate',
             value: files.length > 0 ? `${Math.round((completedFiles.length / files.length) * 100)}%` : '0%',
             change: completedFiles.length > 0 ? '+100%' : '0%',
             icon: Target,

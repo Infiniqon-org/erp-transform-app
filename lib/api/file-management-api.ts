@@ -181,8 +181,8 @@ class FileManagementAPI {
     console.log('🔄 Initializing upload:', filename, useAI ? '(AI Processing)' : '(Rules-Based)')
     return this.makeRequest(ENDPOINTS.UPLOADS, authToken, {
       method: "POST",
-      body: JSON.stringify({ 
-        filename, 
+      body: JSON.stringify({
+        filename,
         content_type: contentType,
         use_ai_processing: useAI
       })
@@ -246,22 +246,21 @@ class FileManagementAPI {
   async getFileColumns(uploadId: string, authToken: string): Promise<{ columns: string[] }> {
     return this.makeRequest(ENDPOINTS.FILES_COLUMNS(uploadId), authToken, { method: 'GET' })
   }
-async downloadFile(uploadId: string, fileType: 'csv' | 'excel' | 'json', dataType: 'clean' | 'quarantine' | 'raw' | 'original' | 'all', authToken: string, targetErp?: string): Promise<Blob> {
+  async downloadFile(uploadId: string, fileType: 'csv' | 'excel' | 'json', dataType: 'clean' | 'quarantine' | 'raw' | 'original' | 'all', authToken: string, targetErp?: string): Promise<Blob> {
     let endpoint = `${ENDPOINTS.FILES_EXPORT(uploadId)}?type=${fileType}&data=${dataType}`
-    
+
     // Add ERP transformation parameter if specified
     if (targetErp) {
       endpoint += `&erp=${encodeURIComponent(targetErp)}`
     }
-    
+
     const url = `${this.baseURL}${endpoint}`
-    
+
     const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${authToken}` }
     })
 
     if (!response.ok) throw new Error(`Download failed: ${response.statusText}`)
-    
     // Log transformation info if present
     const erpTransformation = response.headers.get('X-ERP-Transformation')
     if (erpTransformation === 'true') {
@@ -271,7 +270,6 @@ async downloadFile(uploadId: string, fileType: 'csv' | 'excel' | 'json', dataTyp
         entity: response.headers.get('X-Entity-Type')
       })
     }
-    
     return response.blob()
   }
 
@@ -280,16 +278,15 @@ async downloadFile(uploadId: string, fileType: 'csv' | 'excel' | 'json', dataTyp
       // Download the original file from S3 via export endpoint
       const blob = await this.downloadFile(uploadId, 'csv', 'all', authToken)
       const text = await blob.text()
-      
       // Parse CSV
       const lines = text.trim().split('\n')
       if (lines.length === 0) {
         return { headers: [], sample_data: [], total_rows: 0 }
       }
-      
+
       const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''))
       const previewLines = lines.slice(1, Math.min(maxRows + 1, lines.length))
-      
+
       const sample_data = previewLines.map(line => {
         const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''))
         const row: Record<string, any> = {}
@@ -298,7 +295,6 @@ async downloadFile(uploadId: string, fileType: 'csv' | 'excel' | 'json', dataTyp
         })
         return row
       })
-      
       return {
         headers,
         sample_data,
@@ -367,7 +363,6 @@ async downloadFile(uploadId: string, fileType: 'csv' | 'excel' | 'json', dataTyp
 
     return new Promise((resolve, reject) => {
       const formData = new FormData()
-      
       Object.keys(fields).forEach(key => formData.append(key, fields[key]))
       formData.append('file', file)
 
@@ -518,7 +513,6 @@ async downloadFile(uploadId: string, fileType: 'csv' | 'excel' | 'json', dataTyp
   async uploadFileComplete(file: File, authToken: string, useAI: boolean = false, onProgress?: (progress: number) => void, onStatusUpdate?: (status: FileStatusResponse) => void, autoProcess: boolean = false): Promise<FileStatusResponse> {
     try {
       if (onProgress) onProgress(0)
-      
       // Step 1: Initialize upload - backend returns presigned URL
       const initResponse = await this.initUpload(file.name, file.type || 'text/csv', authToken, useAI)
       console.log('📤 Upload initialized:', initResponse)
@@ -526,14 +520,13 @@ async downloadFile(uploadId: string, fileType: 'csv' | 'excel' | 'json', dataTyp
 
       // Step 2: Upload to S3 using presigned POST (preferred) or PUT (fallback)
       console.log('📤 Uploading to S3...')
-      
       // Check if backend wants us to use POST method (presignedPost with usePost flag)
       if (initResponse.usePost && initResponse.presignedPost) {
         console.log('🟢 Using presigned POST method')
         await this.uploadToS3Post(
-          initResponse.presignedPost.url, 
-          initResponse.presignedPost.fields, 
-          file, 
+          initResponse.presignedPost.url,
+          initResponse.presignedPost.fields,
+          file,
           (s3Progress) => {
             if (onProgress) onProgress(10 + (s3Progress * 0.4))
           }
@@ -562,7 +555,6 @@ async downloadFile(uploadId: string, fileType: 'csv' | 'excel' | 'json', dataTyp
       } else {
         throw new Error('No valid upload method provided by backend')
       }
-      
       console.log('✅ S3 upload complete')
       if (onProgress) onProgress(100)
 
@@ -699,6 +691,11 @@ async downloadFile(uploadId: string, fileType: 'csv' | 'excel' | 'json', dataTyp
     })
 
     if (!response.ok) {
+      // 404 means no DQ report exists yet (new user or no processed files)
+      // Return null instead of throwing to handle gracefully
+      if (response.status === 404) {
+        return null as unknown as OverallDqReportResponse
+      }
       throw new Error(`Overall DQ report download failed: ${response.statusText}`)
     }
 
@@ -743,69 +740,203 @@ async downloadFile(uploadId: string, fileType: 'csv' | 'excel' | 'json', dataTyp
     return JSON.parse(text)
   }
 
-  // ==================== Unified Bridge APIs ====================
+  // ==================== Unified Bridge APIs (Multi-Source Ingestion) ====================
 
   /**
-   * Get list of ERPs available in Unified Bridge
+   * Ingest data from FTP/SFTP server
    */
-  async getUnifiedBridgeErps(token: string): Promise<UnifiedBridgeErpsResponse> {
-    const response = await fetch(`${API_BASE_URL}/unified-bridge/erps`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`Failed to get Unified Bridge ERPs: ${response.statusText}`)
-    }
-
-    return response.json()
-  }
-
-  /**
-   * Get files available for a specific ERP in Unified Bridge
-   */
-  async getUnifiedBridgeFiles(erpName: string, token: string): Promise<UnifiedBridgeFilesResponse> {
-    const response = await fetch(`${API_BASE_URL}/unified-bridge/files?erp=${encodeURIComponent(erpName)}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`Failed to get Unified Bridge files: ${response.statusText}`)
-    }
-
-    return response.json()
-  }
-
-  /**
-   * Import a file from Unified Bridge into the DQ pipeline
-   */
-  async importUnifiedBridgeFile(fileId: string, erpName: string, token: string): Promise<UnifiedBridgeImportResponse> {
-    const response = await fetch(`${API_BASE_URL}/unified-bridge/import`, {
+  async ingestFromFtp(config: FtpIngestionConfig, token: string): Promise<IngestionResponse> {
+    const response = await fetch(`${API_BASE_URL}/unified-bridge/ftp/ingest`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        file_id: fileId,
-        erp: erpName,
-      }),
+      body: JSON.stringify(config),
     })
 
     if (!response.ok) {
-      throw new Error(`Failed to import Unified Bridge file: ${response.statusText}`)
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.error || `FTP ingestion failed: ${response.statusText}`)
     }
 
     return response.json()
   }
+
+  /**
+   * Ingest data from TCP endpoint
+   */
+  async ingestFromTcp(config: TcpIngestionConfig, token: string): Promise<IngestionResponse> {
+    const response = await fetch(`${API_BASE_URL}/unified-bridge/tcp/ingest`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(config),
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.error || `TCP ingestion failed: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  /**
+   * Ingest data from HTTP endpoint
+   */
+  async ingestFromHttp(config: HttpIngestionConfig, token: string): Promise<IngestionResponse> {
+    const response = await fetch(`${API_BASE_URL}/unified-bridge/http/ingest`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(config),
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.error || `HTTP ingestion failed: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  /**
+   * Upload binary file via API
+   */
+  async uploadBinary(file: File, token: string, onProgress?: (progress: number) => void): Promise<IngestionResponse> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+
+      reader.onload = async () => {
+        try {
+          const base64 = (reader.result as string).split(',')[1]
+
+          const response = await fetch(`${API_BASE_URL}/unified-bridge/binary/upload`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              filename: file.name,
+              content_type: file.type || 'application/octet-stream',
+              data: base64,
+            }),
+          })
+
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({}))
+            throw new Error(error.error || `Binary upload failed: ${response.statusText}`)
+          }
+
+          if (onProgress) onProgress(100)
+          resolve(await response.json())
+        } catch (error) {
+          reject(error)
+        }
+      }
+
+      reader.onerror = () => reject(new Error('Failed to read file'))
+
+      if (onProgress) onProgress(10)
+      reader.readAsDataURL(file)
+    })
+  }
+
+  /**
+   * Test FTP connection
+   */
+  async testFtpConnection(config: Omit<FtpIngestionConfig, 'filename'>): Promise<{ success: boolean; message: string }> {
+    // For now, just validate the config
+    if (!config.host || !config.remote_path) {
+      return { success: false, message: 'Host and remote path are required' }
+    }
+    // In production, would call a test endpoint
+    return { success: true, message: 'Connection parameters look valid' }
+  }
+
+  /**
+   * Test TCP connection  
+   */
+  async testTcpConnection(config: Omit<TcpIngestionConfig, 'filename'>): Promise<{ success: boolean; message: string }> {
+    if (!config.host || !config.port) {
+      return { success: false, message: 'Host and port are required' }
+    }
+    return { success: true, message: 'Connection parameters look valid' }
+  }
+
+  /**
+   * Test HTTP endpoint
+   */
+  async testHttpEndpoint(config: Omit<HttpIngestionConfig, 'filename'>): Promise<{ success: boolean; message: string }> {
+    if (!config.url) {
+      return { success: false, message: 'URL is required' }
+    }
+    try {
+      new URL(config.url)
+      return { success: true, message: 'URL is valid' }
+    } catch {
+      return { success: false, message: 'Invalid URL format' }
+    }
+  }
 }
 
-// Unified Bridge Types
+// ==================== Unified Bridge Ingestion Types ====================
+
+export interface FtpIngestionConfig {
+  host: string
+  port?: number
+  username?: string
+  password?: string
+  protocol: 'ftp' | 'sftp'
+  remote_path: string
+  filename: string
+  private_key?: string
+}
+
+export interface TcpIngestionConfig {
+  host: string
+  port: number
+  timeout_seconds?: number
+  delimiter?: string
+  max_size_bytes?: number
+  request_data?: string
+  filename: string
+}
+
+export interface HttpIngestionConfig {
+  url: string
+  method?: 'GET' | 'POST' | 'PUT'
+  headers?: Record<string, string>
+  body?: Record<string, any> | string
+  auth?: {
+    type: 'none' | 'bearer' | 'api_key' | 'basic'
+    token?: string
+    api_key?: string
+    username?: string
+    password?: string
+    header_name?: string
+  }
+  timeout_seconds?: number
+  filename: string
+}
+
+export interface IngestionResponse {
+  success: boolean
+  message: string
+  upload_id: string
+  filename: string
+  size_bytes: number
+  source?: string
+  content_type?: string
+}
+
+// Legacy types for backward compatibility
 export interface UnifiedBridgeErp {
   name: string
   available: boolean
