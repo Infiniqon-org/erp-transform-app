@@ -51,7 +51,7 @@ export function AnalyticsSection({ files }: AnalyticsSectionProps) {
             color: 'text-blue-400'
           },
           {
-            title: 'Avg DQ Score',
+            title: 'Avg DQ',
             value: `${avgDqScore.toFixed(1)}%`,
             change: avgDqScore > 90 ? '+5%' : avgDqScore > 70 ? '+2%' : '0%',
             icon: Gauge,
@@ -163,15 +163,15 @@ export function AnalyticsSection({ files }: AnalyticsSectionProps) {
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total Rows</span>
+                  <span className="text-muted-foreground">Total Input Rows</span>
                   <span>{files.reduce((sum, f) => sum + (f.rows_in || 0), 0)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-green-400">Clean Rows</span>
+                  <span className="text-green-400">Validated Output Rows</span>
                   <span>{totalRowsProcessed}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-yellow-400">Quarantined</span>
+                  <span className="text-yellow-400">Records Quarantined</span>
                   <span>{totalQuarantined}</span>
                 </div>
               </div>

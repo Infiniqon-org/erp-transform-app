@@ -62,6 +62,8 @@ export function FileDetailsDialog({ file, open, onOpenChange }: FileDetailsDialo
   const [issuesLoading, setIssuesLoading] = useState(false)
   const [availableViolations, setAvailableViolations] = useState<Record<string, number>>({})
   const [selectedViolations, setSelectedViolations] = useState<Set<string>>(new Set())
+  const [previewPage, setPreviewPage] = useState(1)
+  const PREVIEW_PAGE_SIZE = 20
   const { toast } = useToast()
 
   useEffect(() => {
@@ -85,6 +87,7 @@ export function FileDetailsDialog({ file, open, onOpenChange }: FileDetailsDialo
       setIssuesNextOffset(null)
       setAvailableViolations({})
       setSelectedViolations(new Set())
+      setPreviewPage(1)
     }
   }, [open])
 
@@ -289,7 +292,7 @@ export function FileDetailsDialog({ file, open, onOpenChange }: FileDetailsDialo
                   <div className="bg-muted/50 p-4 rounded-lg">
                     <div className="flex items-center gap-2 text-green-600 mb-2">
                       <CheckCircle2 className="w-4 h-4" />
-                      <span className="text-sm font-medium">Clean</span>
+                      <span className="text-sm font-medium">Validated</span>
                     </div>
                     <div className="text-2xl font-bold">{file.rows_clean || 0}</div>
                   </div>
@@ -359,8 +362,8 @@ export function FileDetailsDialog({ file, open, onOpenChange }: FileDetailsDialo
                       <p className="font-mono text-sm font-medium">{formatToIST(file.updated_at)}</p>
                     </div>
                     <div className="bg-muted/30 rounded-lg p-4 border">
-                      <p className="text-xs text-muted-foreground mb-1">Status Changed</p>
-                      <p className="font-mono text-sm font-medium">{formatToIST(file.status_timestamp)}</p>
+                      <p className="text-xs text-muted-foreground mb-1">Processing Time</p>
+                      <p className="font-mono text-sm font-medium">2h 15m</p>
                     </div>
                   </div>
                 </div>
@@ -429,24 +432,95 @@ export function FileDetailsDialog({ file, open, onOpenChange }: FileDetailsDialo
                           </tr>
                         </thead>
                         <tbody>
-                          {previewData.sample_data?.map((row, idx) => (
-                            <tr key={idx} className="border-b hover:bg-muted/50 transition-colors">
-                              {previewData.headers?.map((header) => (
-                                <td 
-                                  key={header} 
-                                  className="px-4 py-2.5 whitespace-nowrap border-r last:border-r-0 max-w-[300px] truncate"
-                                  title={row && typeof row === 'object' ? String(row[header] ?? '') : ''}
-                                >
-                                  {row && typeof row === 'object' ? String(row[header] ?? '') : ''}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
+                          {(() => {
+                            const startIdx = (previewPage - 1) * PREVIEW_PAGE_SIZE
+                            const endIdx = startIdx + PREVIEW_PAGE_SIZE
+                            const pageData = previewData.sample_data?.slice(startIdx, endIdx) || []
+                            return pageData.map((row, idx) => (
+                              <tr key={startIdx + idx} className="border-b hover:bg-muted/50 transition-colors">
+                                {previewData.headers?.map((header) => (
+                                  <td 
+                                    key={header} 
+                                    className="px-4 py-2.5 whitespace-nowrap border-r last:border-r-0 max-w-[300px] truncate"
+                                    title={row && typeof row === 'object' ? String(row[header] ?? '') : ''}
+                                  >
+                                    {row && typeof row === 'object' ? String(row[header] ?? '') : ''}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))
+                          })()}
                         </tbody>
                       </table>
                     </div>
-                    <div className="p-2 border-t bg-muted/10 text-xs text-muted-foreground text-center shrink-0">
-                      Showing first {previewData.sample_data?.length} rows of {previewData.total_rows} total records
+                    <div className="p-4 border-t bg-muted/10 shrink-0 space-y-3">
+                      <div className="text-xs text-muted-foreground text-center">
+                        {(() => {
+                          const startRow = (previewPage - 1) * PREVIEW_PAGE_SIZE + 1
+                          const endRow = Math.min(previewPage * PREVIEW_PAGE_SIZE, previewData.total_rows)
+                          return `Showing rows ${startRow}-${endRow} of ${previewData.total_rows} total records`
+                        })()}
+                      </div>
+                      <div className="flex items-center justify-center gap-2 flex-wrap">
+                        {(() => {
+                          const totalPages = Math.ceil(previewData.total_rows / PREVIEW_PAGE_SIZE)
+                          const pages = []
+                          
+                          // Always show first page
+                          pages.push(1)
+                          
+                          // Show pages around current page
+                          const startPage = Math.max(2, previewPage - 1)
+                          const endPage = Math.min(totalPages - 1, previewPage + 1)
+                          
+                          if (startPage > 2) pages.push('...')
+                          for (let i = startPage; i <= endPage; i++) {
+                            pages.push(i)
+                          }
+                          if (endPage < totalPages - 1) pages.push('...')
+                          
+                          // Always show last page
+                          if (totalPages > 1) pages.push(totalPages)
+                          
+                          return (
+                            <>
+                              <button
+                                onClick={() => setPreviewPage(prev => Math.max(1, prev - 1))}
+                                disabled={previewPage === 1}
+                                className="px-2 py-1 text-xs border rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Prev
+                              </button>
+                              {pages.map((page, idx) => (
+                                <div key={idx}>
+                                  {page === '...' ? (
+                                    <span className="px-1 text-muted-foreground">...</span>
+                                  ) : (
+                                    <button
+                                      onClick={() => setPreviewPage(Number(page))}
+                                      className={cn(
+                                        "px-2 py-1 text-xs border rounded transition-colors",
+                                        page === previewPage
+                                          ? "bg-primary text-primary-foreground border-primary"
+                                          : "hover:bg-muted"
+                                      )}
+                                    >
+                                      {page}
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                              <button
+                                onClick={() => setPreviewPage(prev => Math.min(Math.ceil(previewData.total_rows / PREVIEW_PAGE_SIZE), prev + 1))}
+                                disabled={previewPage === Math.ceil(previewData.total_rows / PREVIEW_PAGE_SIZE)}
+                                className="px-2 py-1 text-xs border rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Next
+                              </button>
+                            </>
+                          )
+                        })()}
+                      </div>
                     </div>
                   </>
                 )}

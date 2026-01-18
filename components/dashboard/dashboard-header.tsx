@@ -88,17 +88,17 @@ export function DashboardHeader({ onRefresh }: DashboardHeaderProps) {
   return (
     <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Analytics Dashboard</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Dashboard</h1>
         <p className="text-muted-foreground text-sm sm:text-base">
           {isAuthenticated && user ? `Welcome back, ${user.name || user.email}` : 'Real-time insights into your ERP data transformation pipeline'}
         </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 sm:space-x-3">
-        <Badge variant="outline">
+        {/* <Badge variant="outline">
           <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
           Live Data
-        </Badge>
+        </Badge> */}
 
         <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
           {refreshing ? (
@@ -118,12 +118,12 @@ export function DashboardHeader({ onRefresh }: DashboardHeaderProps) {
           Export
         </Button>
 
-        {isAuthenticated && (
+        {/* {isAuthenticated && (
           <Button variant="outline" size="sm" onClick={handleLogout} className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/50">
             <LogOut className="w-4 h-4 mr-2" />
             Logout
           </Button>
-        )}
+        )} */}
       </div>
     </div>
   )

@@ -261,7 +261,6 @@ class FileManagementAPI {
     })
 
     if (!response.ok) throw new Error(`Download failed: ${response.statusText}`)
-
     // Log transformation info if present
     const erpTransformation = response.headers.get('X-ERP-Transformation')
     if (erpTransformation === 'true') {
@@ -271,7 +270,6 @@ class FileManagementAPI {
         entity: response.headers.get('X-Entity-Type')
       })
     }
-
     return response.blob()
   }
 
@@ -280,7 +278,6 @@ class FileManagementAPI {
       // Download the original file from S3 via export endpoint
       const blob = await this.downloadFile(uploadId, 'csv', 'all', authToken)
       const text = await blob.text()
-
       // Parse CSV
       const lines = text.trim().split('\n')
       if (lines.length === 0) {
@@ -298,7 +295,6 @@ class FileManagementAPI {
         })
         return row
       })
-
       return {
         headers,
         sample_data,
@@ -367,7 +363,6 @@ class FileManagementAPI {
 
     return new Promise((resolve, reject) => {
       const formData = new FormData()
-
       Object.keys(fields).forEach(key => formData.append(key, fields[key]))
       formData.append('file', file)
 
@@ -518,7 +513,6 @@ class FileManagementAPI {
   async uploadFileComplete(file: File, authToken: string, useAI: boolean = false, onProgress?: (progress: number) => void, onStatusUpdate?: (status: FileStatusResponse) => void, autoProcess: boolean = false): Promise<FileStatusResponse> {
     try {
       if (onProgress) onProgress(0)
-
       // Step 1: Initialize upload - backend returns presigned URL
       const initResponse = await this.initUpload(file.name, file.type || 'text/csv', authToken, useAI)
       console.log('📤 Upload initialized:', initResponse)
@@ -526,7 +520,6 @@ class FileManagementAPI {
 
       // Step 2: Upload to S3 using presigned POST (preferred) or PUT (fallback)
       console.log('📤 Uploading to S3...')
-
       // Check if backend wants us to use POST method (presignedPost with usePost flag)
       if (initResponse.usePost && initResponse.presignedPost) {
         console.log('🟢 Using presigned POST method')
@@ -562,7 +555,6 @@ class FileManagementAPI {
       } else {
         throw new Error('No valid upload method provided by backend')
       }
-
       console.log('✅ S3 upload complete')
       if (onProgress) onProgress(100)
 
@@ -978,4 +970,3 @@ export interface UnifiedBridgeImportResponse {
 
 export const fileManagementAPI = new FileManagementAPI()
 export default fileManagementAPI
-

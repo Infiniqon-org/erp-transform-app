@@ -68,7 +68,6 @@ export function LoginForm() {
     const lastChar = localPart[localPart.length - 1]
     const middleLength = localPart.length - 3
     const masked = '*'.repeat(Math.max(middleLength, 4))
-
     return `${firstPart}${masked}${lastChar}@${domain}`
   }
 

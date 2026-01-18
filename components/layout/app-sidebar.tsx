@@ -17,7 +17,7 @@ const navigation = [
 		name: "Dashboard",
 		href: "/dashboard",
 		icon: BarChart3,
-		description: "Overview, metrics, and recent activity",
+		description: "Monitor performance, analytics, and system activity",
 	},
 	// {
 	// 	name: "Transform Data",
@@ -26,16 +26,16 @@ const navigation = [
 	// 	description: "Upload and transform your files",
 	// },
 	{
-		name: "File Manager",
+		name: "Catalog Items",
 		href: "/files",
 		icon: FileText,
-		description: "Upload, process, and export",
+		description: "Manage file uploads, processing workflows, and exports",
 	},
 	{
 		name: "Admin",
 		href: "/admin",
 		icon: Settings,
-		description: "Organization settings",
+		description: "Configure organization-level settings and permissions",
 	},
 ]
 

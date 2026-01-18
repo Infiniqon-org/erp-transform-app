@@ -42,10 +42,10 @@ export default function SignUpPage() {
           <div className="flex-1 flex flex-col justify-center">
             <div className="mb-8">
               <h1 className="text-5xl font-bold mb-6 leading-tight text-slate-900 dark:text-white">
-                Create Your Account
+                Start Your Data<br />Journey Today
               </h1>
               <p className="text-lg text-slate-600 dark:text-white/70 leading-relaxed max-w-md">
-                Import data from any source, apply transformations, and export clean, structured files.
+                Connect data from any source, apply powerful transformations, and export clean, structured datasets with ease
               </p>
             </div>
             
@@ -58,7 +58,7 @@ export default function SignUpPage() {
                 </div>
                 <div>
                   <p className="font-medium text-slate-900 dark:text-white">1. Connect Your Data</p>
-                  <p className="text-sm text-slate-500 dark:text-white/50">Upload files or connect to your ERP systems</p>
+                  <p className="text-sm text-slate-500 dark:text-white/50">Upload files or securely integrate with your source systems</p>
                 </div>
               </div>
               <div className="flex items-start space-x-4">
@@ -67,7 +67,7 @@ export default function SignUpPage() {
                 </div>
                 <div>
                   <p className="font-medium text-slate-900 dark:text-white">2. Transform & Clean</p>
-                  <p className="text-sm text-slate-500 dark:text-white/50">Auto-mapping, validation, and quality scoring</p>
+                  <p className="text-sm text-slate-500 dark:text-white/50">Automatically map fields, validate data, and measure quality scores</p>
                 </div>
               </div>
               <div className="flex items-start space-x-4">
@@ -76,7 +76,7 @@ export default function SignUpPage() {
                 </div>
                 <div>
                   <p className="font-medium text-slate-900 dark:text-white">3. Export Anywhere</p>
-                  <p className="text-sm text-slate-500 dark:text-white/50">Download as CSV, Excel, JSON, or more</p>
+                  <p className="text-sm text-slate-500 dark:text-white/50">Send and receive files via FTP, HTTP, ERP, and SMTP protocols. Download in CSV, Excel, JSON, and other supported formats</p>
                 </div>
               </div>
             </div>

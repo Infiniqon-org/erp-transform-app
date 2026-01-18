@@ -1,6 +1,6 @@
 "use client"
 
-import { BarChart3, Database, RefreshCcw, Shield } from "lucide-react"
+import { Microscope, Zap, GitBranch, Tag } from "lucide-react"
 
 import Image from "next/image"
 import { LoginForm } from "@/components/auth/login-form"
@@ -42,7 +42,7 @@ export default function LoginPage() {
           <div className="flex-1 flex flex-col justify-center">
             <div className="mb-8">
               <h1 className="text-5xl font-bold mb-6 leading-tight text-slate-900 dark:text-white">
-                Welcome Back
+                Transform Data,<br />Empower Decisions
               </h1>
               <p className="text-lg text-slate-600 dark:text-white/70 leading-relaxed max-w-md">
                 Access your dashboard and continue transforming your data with our powerful platform.
@@ -52,39 +52,39 @@ export default function LoginPage() {
             {/* Features Grid */}
             <div className="grid grid-cols-2 gap-4 max-w-md">
               <div className="flex items-center space-x-3 p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                <div className="w-10 h-10 rounded-lg bg-cyan-100 dark:bg-cyan-500/20 flex items-center justify-center">
-                  <Database className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
+                  <Microscope className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm text-slate-900 dark:text-white">Multi-Source</p>
-                  <p className="text-xs text-slate-500 dark:text-white/50">ERP Connectors</p>
+                  <p className="font-medium text-sm text-slate-900 dark:text-white">Data Profiling</p>
+                  <p className="text-xs text-slate-500 dark:text-white/50">Analyze & Understand</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3 p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                <div className="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-500/20 flex items-center justify-center">
-                  <RefreshCcw className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm text-slate-900 dark:text-white">Real-time</p>
-                  <p className="text-xs text-slate-500 dark:text-white/50">Processing</p>
+                  <p className="font-medium text-sm text-slate-900 dark:text-white">Data Modernization</p>
+                  <p className="text-xs text-slate-500 dark:text-white/50">Transform & Optimize</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3 p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
                 <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  <GitBranch className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm text-slate-900 dark:text-white">Analytics</p>
-                  <p className="text-xs text-slate-500 dark:text-white/50">Data Quality</p>
+                  <p className="font-medium text-sm text-slate-900 dark:text-white">Data Lineage</p>
+                  <p className="text-xs text-slate-500 dark:text-white/50">Track & Trace Origins</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3 p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
+                  <Tag className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm text-slate-900 dark:text-white">Secure</p>
-                  <p className="text-xs text-slate-500 dark:text-white/50">Enterprise Grade</p>
+                  <p className="font-medium text-sm text-slate-900 dark:text-white">Metadata Management</p>
+                  <p className="text-xs text-slate-500 dark:text-white/50">Organize & Catalog</p>
                 </div>
               </div>
             </div>

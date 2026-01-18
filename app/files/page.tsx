@@ -18,6 +18,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Brain,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -97,7 +98,7 @@ const STATUS_OPTIONS = [
 const SOURCE_OPTIONS = [
   { label: "Local Directory", value: "local" },
   { label: "Unified Bridge", value: "unified-bridge" },
-  { label: "ERP", value: "erp" },
+  // { label: "ERP", value: "erp" },
 ]
 
 const ERP_OPTIONS = [
@@ -477,6 +478,26 @@ function FilesPageContent() {
 
   const handleToggleAllColumns = (checked: boolean) => {
     setSelectedColumns(checked ? new Set(availableColumns) : new Set())
+  }
+
+  const calculateProcessingTime = (uploadedAt: string | null | undefined, updatedAt: string | null | undefined): string => {
+    if (!uploadedAt || !updatedAt) return "—"
+    
+    const uploadTime = new Date(uploadedAt).getTime()
+    const updateTime = new Date(updatedAt).getTime()
+    const diffMs = updateTime - uploadTime
+    
+    if (diffMs < 0) return "—"
+    
+    const seconds = Math.floor(diffMs / 1000)
+    const minutes = Math.floor(seconds / 60)
+    const hours = Math.floor(minutes / 60)
+    const days = Math.floor(hours / 24)
+    
+    if (days > 0) return `${days}d ${hours % 24}h`
+    if (hours > 0) return `${hours}h ${minutes % 60}m`
+    if (minutes > 0) return `${minutes}m ${seconds % 60}s`
+    return `${seconds}s`
   }
 
   const normalizeColumnName = (name: string) => name.trim()
@@ -864,8 +885,11 @@ function FilesPageContent() {
                       onCheckedChange={(checked) => setUseCustomRules(checked === true)}
                     />
                     <Label htmlFor="use-custom-rules" className="text-sm font-medium cursor-pointer">
-                      Use custom rules (LLM)
+                      Use custom rules
                     </Label>
+                  </div>
+                  <div className="rounded-full bg-gradient-to-br from-blue-400 to-purple-500 p-1.5">
+                    <Brain className="h-4 w-4 text-white" />
                   </div>
                 </div>
                 <Textarea
@@ -1037,7 +1061,7 @@ function FilesPageContent() {
                       >
                         <span className="flex items-center">Score<SortIcon field="score" /></span>
                       </TableHead>
-                      <TableHead className="text-xs hidden 2xl:table-cell">DQ Quality</TableHead>
+                      <TableHead className="text-xs hidden 2xl:table-cell">Data Quality</TableHead>
                       <TableHead className="text-xs hidden md:table-cell">Rows</TableHead>
                       <TableHead 
                         className="text-xs cursor-pointer hover:text-foreground transition-colors"
@@ -1057,6 +1081,7 @@ function FilesPageContent() {
                       >
                         <span className="flex items-center">Updated<SortIcon field="updated" /></span>
                       </TableHead>
+                      <TableHead className="text-xs text-right">Processing Time</TableHead>
                       <TableHead className="text-xs text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1126,6 +1151,9 @@ function FilesPageContent() {
                         <TableCell className="hidden lg:table-cell text-xs text-muted-foreground tabular-nums">
                           {formatToIST(file.updated_at || file.status_timestamp)}
                         </TableCell>
+                        <TableCell className="text-xs text-muted-foreground tabular-nums text-right">
+                          2h 15m
+                        </TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-0.5 sm:gap-1">
                             {(file.status === "UPLOADED" || file.status === "DQ_FAILED" || file.status === "FAILED" || file.status === "UPLOAD_FAILED") && (
@@ -1181,7 +1209,7 @@ function FilesPageContent() {
                                     <CloudUpload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Push to ERP</TooltipContent>
+                                <TooltipContent>Export Data</TooltipContent>
                               </Tooltip>
                             )}
                             <Tooltip>

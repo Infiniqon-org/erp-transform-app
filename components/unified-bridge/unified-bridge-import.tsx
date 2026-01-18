@@ -16,13 +16,14 @@ import { useAuth } from "@/components/providers/auth-provider"
 import FtpSourceForm from "./ftp-source-form"
 import TcpSourceForm from "./tcp-source-form"
 import HttpSourceForm from "./http-source-form"
+import ErpSourceForm from "./erp-source-form"
 
 interface UnifiedBridgeImportProps {
   onImportComplete?: (uploadId: string) => void
   onNotification?: (message: string, type: "success" | "error") => void
 }
 
-type IngestionSource = "ftp" | "tcp" | "http"
+type IngestionSource = "ftp" | "tcp" | "http" | "other"
 
 export default function UnifiedBridgeImport({
   onImportComplete,
@@ -63,18 +64,21 @@ export default function UnifiedBridgeImport({
     ftp: FolderDown,
     tcp: Network,
     http: Globe,
+    other: Server,
   }
 
   const sourceLabels = {
     ftp: "FTP/SFTP",
     tcp: "TCP",
     http: "HTTP",
+    other: "Other",
   }
 
   const sourceDescriptions = {
     ftp: "Pull files from FTP or SFTP servers",
     tcp: "Stream data from TCP endpoints",
     http: "Fetch data from HTTP APIs and endpoints",
+    other: "Connect to ERP systems like QuickBooks, SAP, Oracle",
   }
 
   return (
@@ -102,8 +106,8 @@ export default function UnifiedBridgeImport({
 
       {/* Source Tabs */}
       <Tabs value={activeSource} onValueChange={(v) => setActiveSource(v as IngestionSource)} className="flex-1 flex flex-col pt-4">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
-          {(["ftp", "tcp", "http"] as IngestionSource[]).map((source) => {
+        <TabsList className="grid w-full grid-cols-4 mb-4">
+          {(["ftp", "tcp", "http", "other"] as IngestionSource[]).map((source) => {
             const Icon = sourceIcons[source]
             return (
               <TabsTrigger
@@ -176,6 +180,15 @@ export default function UnifiedBridgeImport({
             />
           </TabsContent>
 
+          <TabsContent value="other" className="mt-0 h-full">
+            <ErpSourceForm
+              token={idToken || ""}
+              onIngestionStart={handleIngestionStart}
+              onIngestionComplete={handleIngestionComplete}
+              onError={handleIngestionError}
+              disabled={isIngesting || !idToken}
+            />
+          </TabsContent>
 
         </div>
       </Tabs>

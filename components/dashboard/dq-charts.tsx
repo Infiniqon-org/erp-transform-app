@@ -42,6 +42,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface DqChartsProps {
   files: FileStatusResponse[];
@@ -93,7 +94,7 @@ const chartConfig = {
     color: CHART_COLORS.red,
   },
   clean: {
-    label: "Clean",
+    label: "Validated",
     color: CHART_COLORS.green,
   },
   fixed: {
@@ -111,6 +112,7 @@ export function DqCharts({ files }: DqChartsProps) {
   const [overallReport, setOverallReport] =
     useState<OverallDqReportResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [timePeriod, setTimePeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
 
   useEffect(() => {
     const loadOverallReport = async () => {
@@ -156,32 +158,181 @@ export function DqCharts({ files }: DqChartsProps) {
         completedFiles.length
       : 0;
 
-  // Prepare monthly data from overall report or generate from files
-  const monthlyData = overallReport?.months
-    ? Object.entries(overallReport.months)
-        .map(([month, stats]) => ({
-          month,
-          filesProcessed: stats.files_processed,
-          filesDeleted: stats.files_deleted,
-          rowsIn: stats.rows_in,
-          cleanRows: stats.rows_in - stats.rows_quarantined,
-          rowsQuarantined: stats.rows_quarantined,
-          processingTime: stats.total_processing_time_seconds,
-        }))
-        .sort((a, b) => {
-          const [aMonth, aYear] = a.month.split("/");
-          const [bMonth, bYear] = b.month.split("/");
-          return (
-            new Date(`${aYear}-${aMonth}-01`).getTime() -
-            new Date(`${bYear}-${bMonth}-01`).getTime()
-          );
-        })
-    : [];
+  // Prepare data from files based on time period
+  const generateTimeBasedData = () => {
+    const processedFiles = completedFiles.filter(f => f.uploaded_at || f.created_at);
+    
+    if (processedFiles.length === 0) return [];
+
+    if (timePeriod === 'day') {
+      // Group by hour for today - 24 hours (12 AM to 12 AM next day)
+      const hourGroups: Record<string, { rowsIn: number; cleanRows: number; rowsQuarantined: number; hour: number }> = {};
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      // Initialize 24 hours with 3-hour intervals (8 time slots)
+      for (let i = 0; i < 24; i += 3) {
+        const hour = i;
+        const displayHour = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+        hourGroups[displayHour] = { rowsIn: 0, cleanRows: 0, rowsQuarantined: 0, hour };
+      }
+      
+      // Aggregate data by hour for today only
+      processedFiles.forEach(f => {
+        const fileDate = new Date(f.uploaded_at || f.created_at!);
+        // Check if file is from today
+        if (fileDate.toDateString() === today.toDateString()) {
+          const hour = fileDate.getHours();
+          // Find the appropriate 3-hour bucket
+          const bucketHour = Math.floor(hour / 3) * 3;
+          const displayHour = bucketHour === 0 ? '12 AM' : bucketHour < 12 ? `${bucketHour} AM` : bucketHour === 12 ? '12 PM' : `${bucketHour - 12} PM`;
+          
+          if (hourGroups[displayHour]) {
+            hourGroups[displayHour].rowsIn += f.rows_in || 0;
+            hourGroups[displayHour].cleanRows += (f.rows_in || 0) - (f.rows_quarantined || 0);
+            hourGroups[displayHour].rowsQuarantined += f.rows_quarantined || 0;
+          }
+        }
+      });
+      
+      // Sort by hour and return
+      return Object.entries(hourGroups)
+        .sort(([, a], [, b]) => a.hour - b.hour)
+        .map(([period, data]) => ({
+          period,
+          filesProcessed: 0,
+          filesDeleted: 0,
+          rowsIn: data.rowsIn,
+          cleanRows: data.cleanRows,
+          rowsQuarantined: data.rowsQuarantined,
+        }));
+      
+    } else if (timePeriod === 'week') {
+      // Group by weekday - last 7 days showing day names
+      const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const dayGroups: Record<string, { rowsIn: number; cleanRows: number; rowsQuarantined: number; dayNum: number }> = {};
+      const now = new Date();
+      
+      // Initialize last 7 days with day names
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dayNum = date.getDay();
+        const key = weekDays[dayNum];
+        if (!dayGroups[key]) {
+          dayGroups[key] = { rowsIn: 0, cleanRows: 0, rowsQuarantined: 0, dayNum };
+        }
+      }
+      
+      // Aggregate data by weekday
+      processedFiles.forEach(f => {
+        const fileDate = new Date(f.uploaded_at || f.created_at!);
+        const dayOfWeek = new Date().getTime() - fileDate.getTime();
+        if (dayOfWeek <= 7 * 24 * 60 * 60 * 1000) { // Last 7 days
+          const dayNum = fileDate.getDay();
+          const key = weekDays[dayNum];
+          if (dayGroups[key]) {
+            dayGroups[key].rowsIn += f.rows_in || 0;
+            dayGroups[key].cleanRows += (f.rows_in || 0) - (f.rows_quarantined || 0);
+            dayGroups[key].rowsQuarantined += f.rows_quarantined || 0;
+          }
+        }
+      });
+      
+      // Sort by day of week (Sun-Sat)
+      return Object.entries(dayGroups)
+        .sort(([, a], [, b]) => a.dayNum - b.dayNum)
+        .map(([period, data]) => ({
+          period,
+          filesProcessed: 0,
+          filesDeleted: 0,
+          rowsIn: data.rowsIn,
+          cleanRows: data.cleanRows,
+          rowsQuarantined: data.rowsQuarantined,
+        }));
+      
+    } else if (timePeriod === 'month') {
+      // Month view - last 6 months
+      if (overallReport?.months) {
+        return Object.entries(overallReport.months)
+          .map(([month, stats]) => ({
+            period: month,
+            filesProcessed: stats.files_processed,
+            filesDeleted: stats.files_deleted,
+            rowsIn: stats.rows_in,
+            cleanRows: stats.rows_in - stats.rows_quarantined,
+            rowsQuarantined: stats.rows_quarantined,
+            processingTime: stats.total_processing_time_seconds,
+          }))
+          .sort((a, b) => {
+            const [aMonth, aYear] = a.period.split("/");
+            const [bMonth, bYear] = b.period.split("/");
+            return (
+              new Date(`${aYear}-${aMonth}-01`).getTime() -
+              new Date(`${bYear}-${bMonth}-01`).getTime()
+            );
+          })
+          .slice(-6);
+      } else {
+        // Fallback: aggregate by month from files - last 6 months
+        const monthGroups: Record<string, { rowsIn: number; cleanRows: number; rowsQuarantined: number }> = {};
+        
+        processedFiles.forEach(f => {
+          const fileDate = new Date(f.uploaded_at || f.created_at!);
+          const key = fileDate.toLocaleDateString('en-US', { month: 'short' });
+          if (!monthGroups[key]) {
+            monthGroups[key] = { rowsIn: 0, cleanRows: 0, rowsQuarantined: 0 };
+          }
+          monthGroups[key].rowsIn += f.rows_in || 0;
+          monthGroups[key].cleanRows += (f.rows_in || 0) - (f.rows_quarantined || 0);
+          monthGroups[key].rowsQuarantined += f.rows_quarantined || 0;
+        });
+        
+        return Object.entries(monthGroups).map(([period, data]) => ({
+          period,
+          filesProcessed: 0,
+          filesDeleted: 0,
+          ...data,
+        }));
+      }
+    } else {
+      // Year view - all 12 months of current year
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const currentYear = new Date().getFullYear();
+      const monthGroups: Record<string, { rowsIn: number; cleanRows: number; rowsQuarantined: number }> = {};
+      
+      // Initialize all 12 months
+      monthNames.forEach(month => {
+        monthGroups[month] = { rowsIn: 0, cleanRows: 0, rowsQuarantined: 0 };
+      });
+      
+      // Aggregate data for current year
+      processedFiles.forEach(f => {
+        const fileDate = new Date(f.uploaded_at || f.created_at!);
+        if (fileDate.getFullYear() === currentYear) {
+          const monthIndex = fileDate.getMonth();
+          const key = monthNames[monthIndex];
+          monthGroups[key].rowsIn += f.rows_in || 0;
+          monthGroups[key].cleanRows += (f.rows_in || 0) - (f.rows_quarantined || 0);
+          monthGroups[key].rowsQuarantined += f.rows_quarantined || 0;
+        }
+      });
+      
+      return monthNames.map(month => ({
+        period: month,
+        filesProcessed: 0,
+        filesDeleted: 0,
+        ...monthGroups[month],
+      }));
+    }
+  };
+
+  const monthlyData = generateTimeBasedData();
 
   // Data quality distribution pie chart data
   const dqDistributionData = [
     {
-      name: "Clean",
+      name: "Validated",
       value: totalRowsOut - totalRowsFixed,
       fill: CHART_COLORS.greenSoft,
     },
@@ -242,7 +393,7 @@ export function DqCharts({ files }: DqChartsProps) {
             </div>
             <div className="text-2xl font-bold">{files.length}</div>
             <p className="text-xs text-muted-foreground">
-              {completedFiles.length} processed
+              {completedFiles.length} files processed
             </p>
           </CardContent>
         </Card>
@@ -251,7 +402,7 @@ export function DqCharts({ files }: DqChartsProps) {
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="h-4 w-4 text-green-500" />
               <span className="text-sm text-muted-foreground">
-                Avg DQ Score
+                Avg DQ
               </span>
             </div>
             <div className={`text-2xl font-bold ${avgDqScore >= 90 ? "text-green-500" : avgDqScore >= 70 ? "text-yellow-500" : "text-red-500"}`}>{avgDqScore.toFixed(1)}%</div>
@@ -269,7 +420,7 @@ export function DqCharts({ files }: DqChartsProps) {
               {totalRowsIn.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              {totalRowsOut.toLocaleString()} clean output
+              {totalRowsOut.toLocaleString()} valid output rows
             </p>
           </CardContent>
         </Card>
@@ -278,7 +429,7 @@ export function DqCharts({ files }: DqChartsProps) {
             <div className="flex items-center gap-2 mb-1">
               <AlertTriangle className="h-4 w-4 text-yellow-500" />
               <span className="text-sm text-muted-foreground">
-                Issues Fixed
+                Issues Resolved
               </span>
             </div>
             <div className="text-2xl font-bold">
@@ -300,7 +451,7 @@ export function DqCharts({ files }: DqChartsProps) {
               Data Quality Distribution
             </CardTitle>
             <CardDescription className="text-xs">
-              Breakdown of processed rows by status
+              Breakdown of processed rows by quality status
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 pb-3 pt-1">
@@ -330,7 +481,7 @@ export function DqCharts({ files }: DqChartsProps) {
               </ChartContainer>
             ) : (
               <div className="h-[220px] flex items-center justify-center text-muted-foreground text-xs">
-                No data available
+                No records available
               </div>
             )}
           </CardContent>
@@ -340,10 +491,10 @@ export function DqCharts({ files }: DqChartsProps) {
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-1 pt-3 px-4">
             <CardTitle className="text-sm font-semibold">
-              DQ Score Distribution
+              Data Quality Score Distribution
             </CardTitle>
             <CardDescription className="text-xs">
-              Files grouped by quality score range
+              Files grouped by quality score ranges
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 pb-3 pt-1">
@@ -453,23 +604,35 @@ export function DqCharts({ files }: DqChartsProps) {
               })()
             ) : (
               <div className="h-[220px] flex items-center justify-center text-muted-foreground text-xs">
-                No processed files yet
+                No processed files available
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Monthly Trends - Full width with comprehensive data */}
+      {/* Trends - Full width with comprehensive data */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-1 pt-3 px-4">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            Monthly Trends
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Row statistics over time
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                Processing Trends
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Row-level processing statistics over time
+              </CardDescription>
+            </div>
+            <Tabs value={timePeriod} onValueChange={(value) => setTimePeriod(value as 'day' | 'week' | 'month' | 'year')}>
+              <TabsList className="h-8">
+                <TabsTrigger value="day" className="text-xs px-3 h-7">Day</TabsTrigger>
+                <TabsTrigger value="week" className="text-xs px-3 h-7">Week</TabsTrigger>
+                {/* <TabsTrigger value="month" className="text-xs px-3 h-7">Month</TabsTrigger> */}
+                <TabsTrigger value="year" className="text-xs px-3 h-7">Year</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </CardHeader>
         <CardContent className="px-4 pb-3 pt-1">
           {monthlyData.length > 0 ? (
@@ -485,7 +648,7 @@ export function DqCharts({ files }: DqChartsProps) {
                     stroke="#E5E7EB"
                   />
                   <XAxis
-                    dataKey="month"
+                    dataKey="period"
                     tick={{ fontSize: 11 }}
                     stroke="#9CA3AF"
                     axisLine={false}
@@ -542,7 +705,7 @@ export function DqCharts({ files }: DqChartsProps) {
                   <Area
                     type="monotone"
                     dataKey="cleanRows"
-                    name="Clean Rows"
+                    name="Validated Rows"
                     stroke={CHART_COLORS.green}
                     fill={CHART_COLORS.greenSoft}
                     fillOpacity={0.5}
@@ -571,12 +734,13 @@ export function DqCharts({ files }: DqChartsProps) {
   );
 }
 
-// Compact Monthly Trends for sidebar
+// Compact Trends for sidebar
 export function MonthlyTrendsCompact({ files }: DqChartsProps) {
   const { idToken } = useAuth();
   const [overallReport, setOverallReport] =
     useState<OverallDqReportResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [timePeriod, setTimePeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
 
   useEffect(() => {
     const loadOverallReport = async () => {
@@ -593,32 +757,139 @@ export function MonthlyTrendsCompact({ files }: DqChartsProps) {
     loadOverallReport();
   }, [idToken]);
 
-  const monthlyData = overallReport?.months
-    ? Object.entries(overallReport.months)
-        .map(([month, stats]) => ({
-          month: month.split("/")[0],
-          rows: stats.rows_in,
-          fixed: stats.rows_fixed,
-        }))
-        .sort((a, b) => {
-          const months = [
-            "01",
-            "02",
-            "03",
-            "04",
-            "05",
-            "06",
-            "07",
-            "08",
-            "09",
-            "10",
-            "11",
-            "12",
-          ];
-          return months.indexOf(a.month) - months.indexOf(b.month);
-        })
-        .slice(-6)
-    : [];
+  const generateCompactData = () => {
+    const completedFiles = files.filter((f) => f.status === "DQ_FIXED" && (f.uploaded_at || f.created_at));
+    
+    if (timePeriod === 'day') {
+      // Hourly view for today - 3-hour intervals
+      const hourGroups: Record<string, { rows: number; fixed: number; hour: number }> = {};
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      // Initialize 3-hour intervals
+      for (let i = 0; i < 24; i += 3) {
+        const hour = i;
+        const displayHour = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+        hourGroups[displayHour] = { rows: 0, fixed: 0, hour };
+      }
+      
+      completedFiles.forEach(f => {
+        const fileDate = new Date(f.uploaded_at || f.created_at!);
+        // Only include today's data
+        if (fileDate.toDateString() === today.toDateString()) {
+          const hour = fileDate.getHours();
+          const bucketHour = Math.floor(hour / 3) * 3;
+          const displayHour = bucketHour === 0 ? '12 AM' : bucketHour < 12 ? `${bucketHour} AM` : bucketHour === 12 ? '12 PM' : `${bucketHour - 12} PM`;
+          
+          if (hourGroups[displayHour]) {
+            hourGroups[displayHour].rows += f.rows_in || 0;
+            hourGroups[displayHour].fixed += f.rows_fixed || 0;
+          }
+        }
+      });
+      
+      return Object.entries(hourGroups)
+        .sort(([, a], [, b]) => a.hour - b.hour)
+        .map(([period, data]) => ({
+          month: period,
+          rows: data.rows,
+          fixed: data.fixed,
+        }));
+        
+    } else if (timePeriod === 'week') {
+      // Last 7 days by weekday
+      const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const dayGroups: Record<string, { rows: number; fixed: number; dayNum: number }> = {};
+      
+      weekDays.forEach((day, idx) => {
+        dayGroups[day] = { rows: 0, fixed: 0, dayNum: idx };
+      });
+      
+      completedFiles.forEach(f => {
+        const fileDate = new Date(f.uploaded_at || f.created_at!);
+        const dayOfWeek = new Date().getTime() - fileDate.getTime();
+        if (dayOfWeek <= 7 * 24 * 60 * 60 * 1000) {
+          const dayNum = fileDate.getDay();
+          const key = weekDays[dayNum];
+          dayGroups[key].rows += f.rows_in || 0;
+          dayGroups[key].fixed += f.rows_fixed || 0;
+        }
+      });
+      
+      return Object.entries(dayGroups)
+        .sort(([, a], [, b]) => a.dayNum - b.dayNum)
+        .map(([period, data]) => ({
+          month: period,
+          rows: data.rows,
+          fixed: data.fixed,
+        }));
+        
+    } else if (timePeriod === 'month') {
+      // Month view - last 6 months
+      if (overallReport?.months) {
+        return Object.entries(overallReport.months)
+          .map(([month, stats]) => ({
+            month: month.split("/")[0],
+            rows: stats.rows_in,
+            fixed: stats.rows_fixed,
+          }))
+          .sort((a, b) => {
+            const months = [
+              "01", "02", "03", "04", "05", "06",
+              "07", "08", "09", "10", "11", "12",
+            ];
+            return months.indexOf(a.month) - months.indexOf(b.month);
+          })
+          .slice(-6);
+      } else {
+        // Fallback: aggregate by month from files
+        const monthGroups: Record<string, { rows: number; fixed: number }> = {};
+        
+        completedFiles.forEach(f => {
+          const fileDate = new Date(f.uploaded_at || f.created_at!);
+          const key = fileDate.toLocaleDateString('en-US', { month: 'short' });
+          if (!monthGroups[key]) {
+            monthGroups[key] = { rows: 0, fixed: 0 };
+          }
+          monthGroups[key].rows += f.rows_in || 0;
+          monthGroups[key].fixed += f.rows_fixed || 0;
+        });
+        
+        return Object.entries(monthGroups).map(([month, data]) => ({
+          month,
+          ...data,
+        }));
+      }
+    } else {
+      // Year view - all 12 months of current year
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const currentYear = new Date().getFullYear();
+      const monthGroups: Record<string, { rows: number; fixed: number }> = {};
+      
+      // Initialize all 12 months
+      monthNames.forEach(month => {
+        monthGroups[month] = { rows: 0, fixed: 0 };
+      });
+      
+      // Aggregate data for current year
+      completedFiles.forEach(f => {
+        const fileDate = new Date(f.uploaded_at || f.created_at!);
+        if (fileDate.getFullYear() === currentYear) {
+          const monthIndex = fileDate.getMonth();
+          const key = monthNames[monthIndex];
+          monthGroups[key].rows += f.rows_in || 0;
+          monthGroups[key].fixed += f.rows_fixed || 0;
+        }
+      });
+      
+      return monthNames.map(month => ({
+        month,
+        ...monthGroups[month],
+      }));
+    }
+  };
+
+  const monthlyData = generateCompactData();
 
   if (loading) {
     return (
@@ -652,10 +923,20 @@ export function MonthlyTrendsCompact({ files }: DqChartsProps) {
   return (
     <Card>
       <CardHeader className="py-3 px-4 pb-1">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
-          Monthly Trends
-        </CardTitle>
+        <div className="flex items-center justify-between mb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
+            Trends
+          </CardTitle>
+          <Tabs value={timePeriod} onValueChange={(value) => setTimePeriod(value as 'day' | 'week' | 'month' | 'year')}>
+            <TabsList className="h-6">
+              <TabsTrigger value="day" className="text-[10px] px-2 h-5">D</TabsTrigger>
+              <TabsTrigger value="week" className="text-[10px] px-2 h-5">W</TabsTrigger>
+              <TabsTrigger value="month" className="text-[10px] px-2 h-5">M</TabsTrigger>
+              <TabsTrigger value="year" className="text-[10px] px-2 h-5">Y</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-2">
         <div className="h-[100px]">
@@ -668,7 +949,14 @@ export function MonthlyTrendsCompact({ files }: DqChartsProps) {
                 dataKey="month"
                 tick={{ fontSize: 9 }}
                 stroke="#9CA3AF"
-                tickFormatter={(val) => monthNames[parseInt(val) - 1] || val}
+                tickFormatter={(val) => {
+                  // For day/week view, return as is (already formatted)
+                  if (timePeriod === 'day' || timePeriod === 'week') {
+                    return val;
+                  }
+                  // For month view, map numeric month to name
+                  return monthNames[parseInt(val) - 1] || val;
+                }}
                 axisLine={false}
                 tickLine={false}
               />
@@ -676,11 +964,17 @@ export function MonthlyTrendsCompact({ files }: DqChartsProps) {
               <ChartTooltip
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
+                    const period = payload[0].payload.month;
+                    let displayPeriod = period;
+                    
+                    // Format month names for numeric months
+                    if (timePeriod === 'month' && /^\d{2}$/.test(period)) {
+                      displayPeriod = monthNames[parseInt(period) - 1] || period;
+                    }
+                    
                     return (
                       <div className="bg-background border rounded-md shadow-sm p-2 text-xs">
-                        <p className="font-medium">
-                          {monthNames[parseInt(payload[0].payload.month) - 1]}
-                        </p>
+                        <p className="font-medium">{displayPeriod}</p>
                         <p className="text-muted-foreground">
                           {payload[0].value?.toLocaleString()} rows
                         </p>
@@ -744,19 +1038,19 @@ export function ProcessingSummary({ files }: DqChartsProps) {
             </span>
           </div>
           <div className="flex justify-between items-center p-2 rounded-lg bg-green-500/10">
-            <span className="text-sm text-muted-foreground">Clean Output</span>
+            <span className="text-sm text-muted-foreground">Valid Output Rows</span>
             <span className="text-sm font-medium text-green-600 dark:text-green-400">
               {totalRowsOut.toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between items-center p-2 rounded-lg bg-yellow-500/10">
-            <span className="text-sm text-muted-foreground">Rows Fixed</span>
+            <span className="text-sm text-muted-foreground">Issues Resolved</span>
             <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
               {totalRowsFixed.toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between items-center p-2 rounded-lg bg-red-500/10">
-            <span className="text-sm text-muted-foreground">Quarantined</span>
+            <span className="text-sm text-muted-foreground">Records Quarantined</span>
             <span className="text-sm font-medium text-red-600 dark:text-red-400">
               {totalRowsQuarantined.toLocaleString()}
             </span>
