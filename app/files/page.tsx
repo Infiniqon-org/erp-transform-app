@@ -80,6 +80,7 @@ import {
 } from "@/components/ui/tooltip"
 import QuickBooksImport from "@/components/quickbooks/quickbooks-import"
 import UnifiedBridgeImport from "@/components/unified-bridge/unified-bridge-import"
+import StorageImport from "@/components/storage/storage-import"
 import { PushToERPModal } from "@/components/files/push-to-erp-modal"
 
 const STATUS_OPTIONS = [
@@ -97,6 +98,7 @@ const STATUS_OPTIONS = [
 
 const SOURCE_OPTIONS = [
   { label: "Local Directory", value: "local" },
+  { label: "Cloud Storage", value: "cloud-storage" },
   { label: "Unified Bridge", value: "unified-bridge" },
   // { label: "ERP", value: "erp" },
 ]
@@ -943,6 +945,19 @@ function FilesPageContent() {
                   accept=".csv,.xlsx,.xls,.json,.sql"
                   className="hidden"
                   onChange={handleFileInput}
+                />
+              </div>
+            ) : selectedSource === "cloud-storage" ? (
+              <div className="min-h-[300px] sm:min-h-[400px] lg:min-h-[500px] rounded-xl border bg-card">
+                <StorageImport
+                  onImportComplete={handleQuickBooksImportComplete}
+                  onNotification={(message, type) => {
+                    toast({
+                      title: type === "success" ? "Success" : "Error",
+                      description: message,
+                      variant: type === "error" ? "destructive" : "default",
+                    })
+                  }}
                 />
               </div>
             ) : selectedSource === "erp" && selectedErp === "quickbooks" ? (
