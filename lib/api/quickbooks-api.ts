@@ -122,8 +122,9 @@ class QuickBooksService {
    */
   async handleCallback(code: string, realmId: string, state: string): Promise<any> {
     try {
+      const params = new URLSearchParams({ code, realmId, state })
       const response = await this.makeRequest(
-        `/quickbooks/callback?code=${code}&realmId=${realmId}&state=${state}`,
+        `/quickbooks/callback?${params.toString()}`,
         { method: 'GET' },
         true // skipAuth - callback endpoint is public
       )
@@ -234,6 +235,7 @@ class QuickBooksService {
 
         // Listen for message from callback window
         const messageHandler = (event: MessageEvent) => {
+          if (event.origin !== window.location.origin) return
           if (event.data.type === 'quickbooks-auth-success') {
             window.removeEventListener('message', messageHandler)
             resolve({ success: true, realmId: event.data.realmId })

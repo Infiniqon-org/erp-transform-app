@@ -56,6 +56,7 @@ export default function QuickBooksImport({
 
     // Listen for messages from callback window or tab visibility changes
     const messageHandler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
       if (
         event.data.type === 'quickbooks-auth-success' ||
         event.data.type === 'quickbooks-connection-updated'

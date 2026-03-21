@@ -625,7 +625,7 @@ class FileManagementAPI {
 
   // Download DQ report JSON for a processed file
   async downloadDqReport(uploadId: string, authToken: string): Promise<DqReportResponse> {
-    const url = `${this.baseURL}/files/${uploadId}/export?type=report&data=json`
+    const url = `${this.baseURL}/files/${uploadId}/download?type=report`
 
     const response = await fetch(url, {
       headers: {

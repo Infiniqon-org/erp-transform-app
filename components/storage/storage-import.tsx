@@ -101,6 +101,7 @@ export default function StorageImport({
     }
 
     const messageHandler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
       if (!selectedProvider) return
       if (
         event.data.type === `${selectedProvider.id}-auth-success` ||
@@ -126,11 +127,13 @@ export default function StorageImport({
 
   // ── Load folder contents when breadcrumbs change ──────────────────────
 
+  const currentFolderId = breadcrumbs[breadcrumbs.length - 1]?.id ?? null
+
   useEffect(() => {
     if (connected && selectedProvider) {
       loadFolderContents()
     }
-  }, [connected, breadcrumbs.length])
+  }, [connected, selectedProvider?.id, currentFolderId])
 
   // ── API calls ─────────────────────────────────────────────────────────
 
