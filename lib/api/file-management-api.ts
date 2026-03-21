@@ -625,7 +625,7 @@ class FileManagementAPI {
 
   // Download DQ report JSON for a processed file
   async downloadDqReport(uploadId: string, authToken: string): Promise<DqReportResponse> {
-    const url = `${this.baseURL}/files/${uploadId}/download?type=report`
+    const url = `${this.baseURL}/files/${uploadId}/export?type=report&data=json`
 
     const response = await fetch(url, {
       headers: {
@@ -746,7 +746,7 @@ class FileManagementAPI {
    * Ingest data from FTP/SFTP server
    */
   async ingestFromFtp(config: FtpIngestionConfig, token: string): Promise<IngestionResponse> {
-    const response = await fetch(`${API_BASE_URL}/unified-bridge/ftp/ingest`, {
+    const response = await fetch(`${API_BASE_URL}/ingest/ftp`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -767,7 +767,7 @@ class FileManagementAPI {
    * Ingest data from TCP endpoint
    */
   async ingestFromTcp(config: TcpIngestionConfig, token: string): Promise<IngestionResponse> {
-    const response = await fetch(`${API_BASE_URL}/unified-bridge/tcp/ingest`, {
+    const response = await fetch(`${API_BASE_URL}/ingest/tcp`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -788,7 +788,7 @@ class FileManagementAPI {
    * Ingest data from HTTP endpoint
    */
   async ingestFromHttp(config: HttpIngestionConfig, token: string): Promise<IngestionResponse> {
-    const response = await fetch(`${API_BASE_URL}/unified-bridge/http/ingest`, {
+    const response = await fetch(`${API_BASE_URL}/ingest/http`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -816,7 +816,7 @@ class FileManagementAPI {
         try {
           const base64 = (reader.result as string).split(',')[1]
 
-          const response = await fetch(`${API_BASE_URL}/unified-bridge/binary/upload`, {
+          const response = await fetch(`${API_BASE_URL}/ingest/binary`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,

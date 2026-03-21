@@ -6,7 +6,6 @@ import { AuthProvider } from "@/components/providers/auth-provider"
 import type { Metadata } from "next"
 import type React from "react"
 import { ReduxProvider } from "@/components/providers/redux-provider"
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 
@@ -56,11 +55,12 @@ export default function RootLayout({
           <AuthProvider>
             <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
               {children}
+              <Toaster />
             </ThemeProvider>
           </AuthProvider>
         </ReduxProvider>
-        <Toaster />
       </body>
+
     </html>
   )
 }

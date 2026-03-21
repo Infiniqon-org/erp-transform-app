@@ -1,5 +1,5 @@
 // Move API base URL to env
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://9joy54ppg5.execute-api.ap-south-1.amazonaws.com/prod"
 
 // Helper function to check if API is available
 const isAPIAvailable = async (): Promise<boolean> => {

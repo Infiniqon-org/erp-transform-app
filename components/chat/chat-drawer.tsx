@@ -334,7 +334,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyPress}
                   placeholder="Ask a question..."
                   disabled={isLoading}
                   className="flex-1"

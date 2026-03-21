@@ -199,9 +199,11 @@ export default function DataToolsPage() {
 
   const simulateProgress = (callback: () => Promise<void>, duration = 3000) => {
     setProgress(0)
+    let done = false
     const interval = setInterval(() => {
       setProgress(prev => {
-        if (prev >= 95) {
+        if (prev >= 95 && !done) {
+          done = true
           clearInterval(interval)
           callback()
           return 100
