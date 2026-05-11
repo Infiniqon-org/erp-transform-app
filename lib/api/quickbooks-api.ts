@@ -105,7 +105,7 @@ class QuickBooksService {
    */
   async connect(): Promise<QuickBooksConnectResponse> {
     try {
-      const response = await this.makeRequest<QuickBooksConnectResponse>('/quickbooks/connect', {
+      const response = await this.makeRequest<QuickBooksConnectResponse>('/connectors/quickbooks/connect', {
         method: 'POST',
         body: JSON.stringify({}),
       })
@@ -124,7 +124,7 @@ class QuickBooksService {
     try {
       const params = new URLSearchParams({ code, realmId, state })
       const response = await this.makeRequest(
-        `/quickbooks/callback?${params.toString()}`,
+        `/connectors/callback/quickbooks?${params.toString()}`,
         { method: 'GET' },
         true // skipAuth - callback endpoint is public
       )
@@ -140,7 +140,7 @@ class QuickBooksService {
    */
   async getConnectionStatus(): Promise<QuickBooksConnectionStatus> {
     try {
-      const response = await this.makeRequest<QuickBooksConnectionStatus>('/quickbooks/connections', {
+      const response = await this.makeRequest<QuickBooksConnectionStatus>('/connectors/quickbooks/connections', {
         method: 'GET',
       })
       return response
@@ -155,7 +155,7 @@ class QuickBooksService {
    */
   async disconnect(): Promise<void> {
     try {
-      await this.makeRequest('/quickbooks/disconnect', {
+      await this.makeRequest('/connectors/quickbooks/disconnect', {
         method: 'DELETE',
       })
     } catch (error) {
@@ -174,7 +174,7 @@ class QuickBooksService {
     filters: QuickBooksImportFilters = {}
   ): Promise<QuickBooksImportResponse> {
     try {
-      const response = await this.makeRequest<QuickBooksImportResponse>('/quickbooks/import', {
+      const response = await this.makeRequest<QuickBooksImportResponse>('/connectors/erp/quickbooks/import', {
         method: 'POST',
         body: JSON.stringify({
           entity,
@@ -194,7 +194,7 @@ class QuickBooksService {
    */
   async exportToQuickBooks(uploadId: string): Promise<QuickBooksExportResponse> {
     try {
-      const response = await this.makeRequest<QuickBooksExportResponse>('/quickbooks/export', {
+      const response = await this.makeRequest<QuickBooksExportResponse>('/connectors/erp/quickbooks/export', {
         method: 'POST',
         body: JSON.stringify({
           upload_id: uploadId,
