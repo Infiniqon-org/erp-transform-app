@@ -1,6 +1,6 @@
 "use client"
 
-import { BarChart3, ChevronLeft, ChevronRight, FileText, HelpCircle, LogOut, Menu, Moon, Settings, Sun, X } from "lucide-react"
+import { BarChart3, CalendarClock, ChevronLeft, ChevronRight, FileText, HelpCircle, LogOut, Menu, Moon, Settings, Sparkles, Sun, X } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -30,6 +30,18 @@ const navigation = [
 		href: "/files",
 		icon: FileText,
 		description: "Manage file uploads, processing workflows, and exports",
+	},
+	{
+		name: "Augmentation",
+		href: "/data-tools/augment",
+		icon: Sparkles,
+		description: "Groq-compiled RightRev augmentation job history",
+	},
+	{
+		name: "Scheduled Jobs",
+		href: "/jobs",
+		icon: CalendarClock,
+		description: "Recurring augmentation and DQ rules",
 	},
 	{
 		name: "Admin",

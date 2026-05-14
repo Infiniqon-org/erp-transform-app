@@ -3,12 +3,14 @@ import { type TypedUseSelectorHook, useDispatch, useSelector } from "react-redux
 import dashboardSlice from "./features/dashboard/dashboardSlice"
 import apiSlice from "./features/api/apiSlice"
 import transformSlice from "./features/transform/transformSlice"
+import jobsSlice from "./features/jobsSlice"
 
 export const store = configureStore({
   reducer: {
     dashboard: dashboardSlice,
     api: apiSlice,
     transform: transformSlice,
+    jobs: jobsSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

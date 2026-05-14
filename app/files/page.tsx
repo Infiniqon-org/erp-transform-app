@@ -82,6 +82,23 @@ import QuickBooksImport from "@/components/quickbooks/quickbooks-import"
 import UnifiedBridgeImport from "@/components/unified-bridge/unified-bridge-import"
 import StorageImport from "@/components/storage/storage-import"
 import { PushToERPModal } from "@/components/files/push-to-erp-modal"
+import {
+  AugmentationPanel,
+  EMPTY_AUGMENTATION_CONFIG,
+  configToCreateJobPayload,
+  type AugmentationConfig,
+} from "@/components/augmentation/augmentation-panel"
+import {
+  AdvancedConfiguration,
+  type DetectedColumn,
+} from "@/components/augmentation"
+import type { AugmentationDraft } from "@/components/augmentation/hooks/useAugmentationDraft"
+import {
+  executeAugmentationFromConfig,
+  listPromptTemplates,
+} from "@/lib/api/augmentation"
+import type { JobCreationPlan } from "@/lib/api/augmentation"
+import type { PromptTemplate } from "@/lib/types/augmentation"
 
 const STATUS_OPTIONS = [
   { label: "All", value: "all", type: "status" },
@@ -160,6 +177,25 @@ function FilesPageContent() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [useCustomRules, setUseCustomRules] = useState(false)
   const [customRulePrompt, setCustomRulePrompt] = useState("")
+  const [augmentationConfig, setAugmentationConfig] = useState<AugmentationConfig>(
+    EMPTY_AUGMENTATION_CONFIG,
+  )
+  const [augmentationTemplates, setAugmentationTemplates] = useState<PromptTemplate[]>([])
+  // Wizard Step-4 (Augmentation) draft — LIFTED to page scope per Wizard spec
+  // §A: schema_hash invalidation lives at wizard level. Null until the user
+  // has either typed a prompt or filled a builder slot. The boolean tracks
+  // explicit "Save & continue" / "Skip" acks for the future left-rail stepper
+  // (consumed in Wave N+5 once WizardShell lands).
+  const [augmentationDraft, setAugmentationDraft] = useState<AugmentationDraft | null>(
+    null,
+  )
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [augmentationStep4Done, setAugmentationStep4Done] = useState(false)
+  // Detected schema for the Augmentation surface. In the current monolithic
+  // upload flow, columns aren't known until after upload; for new uploads
+  // this stays empty and the surface degrades gracefully. The same draft
+  // hook persists across the schema-change window.
+  const [augmentationSchema] = useState<DetectedColumn[]>([])
   const [columnModalOpen, setColumnModalOpen] = useState(false)
   const [columnModalFile, setColumnModalFile] = useState<FileStatusResponse | null>(null)
   const [availableColumns, setAvailableColumns] = useState<string[]>([])
@@ -171,7 +207,7 @@ function FilesPageContent() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const selectionFileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
-  const { idToken } = useAuth()
+  const { idToken, accessToken } = useAuth()
 
   const loadFiles = useCallback(async () => {
     if (!idToken) return
@@ -194,6 +230,24 @@ function FilesPageContent() {
   useEffect(() => {
     loadFiles()
   }, [loadFiles])
+
+  // Best-effort load of saved augmentation prompt templates for the picker.
+  // Failures are silent — the backend's list endpoint currently returns the
+  // active version only and a 404 just means "no template by that id yet".
+  useEffect(() => {
+    if (!accessToken) return
+    let cancelled = false
+    listPromptTemplates(accessToken)
+      .then((res) => {
+        if (!cancelled) setAugmentationTemplates(res.items ?? [])
+      })
+      .catch(() => {
+        /* swallow — list endpoint is best-effort */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [accessToken])
 
   const getDqQuality = (score: number | null | undefined): "excellent" | "good" | "bad" | null => {
     if (typeof score !== "number") return null
@@ -325,6 +379,120 @@ function FilesPageContent() {
         title: "Upload Complete",
         description: "File uploaded successfully. Click the play button to start processing.",
       })
+
+      // Augmentation dispatch — two sources, in priority order:
+      //   1. NEW: wizard Step-4 AdvancedConfiguration draft (if user filled it).
+      //   2. LEGACY: scenario-card AugmentationPanel below the upload zone.
+      // If the user skipped Step-4 entirely, neither branch fires and the DQ
+      // pipeline runs as before.
+      //
+      // Both branches now go through the 2-step orchestrator
+      // (executeAugmentationFromConfig): (a) POST /augmentation/prompt-templates
+      // if no saved template_id, then (b) POST /augmentation/jobs with the
+      // canonical {prompt_template_id, input_dataset_key, output_dataset_key}
+      // shape that the BE handler requires (FE-BE-001 fix, 2026-05-14).
+      if (accessToken && finalStatus?.upload_id) {
+        const draft = augmentationDraft
+        const hasDraftContent =
+          draft &&
+          (draft.prompt.trim().length > 0 ||
+            draft.plan.groupBy.length > 0 ||
+            draft.plan.aggregates.length > 0 ||
+            draft.plan.sortBy.length > 0 ||
+            draft.plan.filters.length > 0)
+
+        const uploadId = finalStatus.upload_id
+        const rawKey = finalStatus.s3_raw_key ?? null
+
+        // Best-effort dataset-key derivation — mirrors augmentation-panel.tsx.
+        const deriveInputKey = (): string => {
+          if (rawKey && rawKey.startsWith("data/")) {
+            const i = rawKey.lastIndexOf("/")
+            if (i > 0) return `${rawKey.slice(0, i)}/result.parquet`
+          }
+          return `data/uploads/${uploadId}/result.parquet`
+        }
+        const deriveOutputKey = (templateId: string): string => {
+          const ts = new Date().toISOString().replace(/[:.]/g, "-")
+          if (rawKey && rawKey.startsWith("data/")) {
+            const i = rawKey.lastIndexOf("/")
+            if (i > 0) return `${rawKey.slice(0, i)}/augmented/${templateId}_${ts}.parquet`
+          }
+          return `data/uploads/${uploadId}/augmented/${templateId}_${ts}.parquet`
+        }
+
+        if (hasDraftContent && draft) {
+          try {
+            // For the wizard draft: if a template_id is set, reuse it;
+            // otherwise mint one client-side so the output key is stable.
+            const newTemplateId =
+              draft.templateId ??
+              (typeof crypto !== "undefined" && "randomUUID" in crypto
+                ? crypto.randomUUID()
+                : `tmpl_${Date.now()}`)
+            const plan: JobCreationPlan = {
+              existingTemplateId: draft.templateId ?? null,
+              template: draft.templateId
+                ? undefined
+                : {
+                    template_id: newTemplateId,
+                    name: `Augmentation draft — ${new Date().toISOString()}`,
+                    prompt: draft.prompt.trim() || "(builder-only)",
+                    expected_cardinality: draft.cardinality ?? "ONE_TO_MANY",
+                    parameters: {
+                      mode: draft.mode,
+                      ...(draft.mode === "builder" ? { plan: draft.plan } : {}),
+                    },
+                  },
+              inputDatasetKey: deriveInputKey(),
+              outputDatasetKey: deriveOutputKey(newTemplateId),
+              soxAuditEnabled: false,
+            }
+            const { job } = await executeAugmentationFromConfig(plan, accessToken)
+            toast({
+              title: "Augmentation queued",
+              description: `Job ${job.job_id.slice(0, 8)}… created (${draft.mode}).`,
+            })
+          } catch (augErr) {
+            console.error("Augmentation dispatch failed:", augErr)
+            toast({
+              title: "Augmentation queue failed",
+              description:
+                augErr instanceof Error
+                  ? augErr.message
+                  : "Could not start augmentation job",
+              variant: "destructive",
+            })
+          }
+        } else if (
+          augmentationConfig.enabled &&
+          augmentationConfig.scenarioId &&
+          augmentationConfig.prompt.trim()
+        ) {
+          try {
+            const plan = configToCreateJobPayload(
+              augmentationConfig,
+              uploadId,
+              rawKey,
+            )
+            if (plan) {
+              const { job } = await executeAugmentationFromConfig(plan, accessToken)
+              toast({
+                title: "Augmentation queued",
+                description: `Job ${job.job_id.slice(0, 8)}… created (${augmentationConfig.scenarioId}).`,
+              })
+            }
+          } catch (augErr) {
+            console.error("Augmentation dispatch failed:", augErr)
+            toast({
+              title: "Augmentation queue failed",
+              description:
+                augErr instanceof Error ? augErr.message : "Could not start augmentation job",
+              variant: "destructive",
+            })
+          }
+        }
+      }
 
       await loadFiles()
     } catch (error) {
@@ -903,6 +1071,38 @@ function FilesPageContent() {
                 />
               </div>
             </div>
+
+            {/* Step 4 — Advanced (Augmentation), Wizard spec §A1.
+                Peer step with explicit skip-and-resume; localStorage drafts
+                scoped to upload_id (null until upload completes — the hook
+                gracefully degrades). The conditional path is clean: if the
+                user never touches this card, the legacy AugmentationPanel
+                below still owns dispatch. */}
+            <AdvancedConfiguration
+              uploadId={null}
+              detectedSchema={augmentationSchema}
+              templates={augmentationTemplates}
+              accessToken={accessToken}
+              onChange={(d, isValid) => {
+                setAugmentationDraft(d)
+                if (isValid) setAugmentationStep4Done(true)
+              }}
+              onContinue={() => setAugmentationStep4Done(true)}
+              onSkip={() => {
+                setAugmentationDraft(null)
+                setAugmentationStep4Done(true)
+              }}
+            />
+
+            {/* Legacy scenario-card Augmentation entry (kept for the current
+                monolithic flow; removed once the Stripe-Atlas left-rail
+                wizard shell lands in Wave N+5). */}
+            <AugmentationPanel
+              value={augmentationConfig}
+              onChange={setAugmentationConfig}
+              templates={augmentationTemplates}
+              accessToken={accessToken}
+            />
 
             {/* Content Area */}
             {selectedSource === "local" ? (

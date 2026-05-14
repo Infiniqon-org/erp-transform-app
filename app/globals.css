@@ -45,6 +45,11 @@
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+
+  /* Augmentation prompt syntax-highlight tokens (spec §5).
+     Two NEW tokens; all other --aug-* aliases live alongside existing vars. */
+  --aug-prompt-literal: oklch(0.45 0.14 150);
+  --aug-prompt-param: oklch(0.55 0.18 290);
 }
 
 .dark {
@@ -86,6 +91,10 @@
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+
+  /* Augmentation prompt syntax-highlight tokens (spec §5; dark variants). */
+  --aug-prompt-literal: oklch(0.75 0.12 150);
+  --aug-prompt-param: oklch(0.78 0.14 290);
 }
 
 @theme inline {
